@@ -180,6 +180,14 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
+@utility scale-grid {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(255, 255, 255, 0.04) 29px, rgba(255, 255, 255, 0.04) 30px),
+    repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(255, 255, 255, 0.04) 29px, rgba(255, 255, 255, 0.04) 30px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px, 30px 30px, 15px 15px;
+}
+
 @utility text-gradient {
   background: linear-gradient(135deg, var(--primary), var(--accent), var(--primary));
   background-size: 200% 200%;

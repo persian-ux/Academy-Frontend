@@ -39,7 +39,11 @@ export default function Navbar() {
           : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto h-full px-4 md:px-6 flex items-center justify-between">
+      {/* Scale grid pattern background */}
+      {scrolled && (
+        <div className="absolute inset-0 scale-grid opacity-40 pointer-events-none" />
+      )}
+      <div className="container mx-auto h-full px-4 md:px-6 flex items-center justify-between relative z-10">
         {/* Logo + Branding */}
         <a
           href="#"
