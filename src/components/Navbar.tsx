@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, User, LogOut } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { logout } from "@/store/slices/authSlice";
 
 const navLinks = [
   { label: "About", href: "#about" },
@@ -11,6 +14,9 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { user } = useAppSelector((state) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -29,6 +35,12 @@ export default function Navbar() {
       target.scrollIntoView({ behavior: "smooth" });
     }
     setIsOpen(false);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setIsOpen(false);
+    navigate("/");
   };
 
   return (
@@ -101,17 +113,45 @@ export default function Navbar() {
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              const hero = document.querySelector("#hero");
-              if (hero) hero.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="bg-accent text-accent-foreground px-5 py-2.5 rounded-lg font-semibold text-sm hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300"
-          >
-            Enroll Now
-          </a>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="w-4 h-4" />
+                <span className="text-white font-medium">{user.name}</span>
+                <span className="px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/20 text-primary">
+                  {user.role}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-white transition-colors duration-300 text-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link
+                to="/signin"
+                className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+              >
+                Sign In
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+              </Link>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const hero = document.querySelector("#hero");
+                  if (hero) hero.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="bg-accent text-accent-foreground px-5 py-2.5 rounded-lg font-semibold text-sm hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300"
+              >
+                Enroll Now
+              </a>
+            </>
+          )}
         </div>
 
         {/* Mobile Hamburger */}
@@ -143,18 +183,43 @@ export default function Navbar() {
               {link.label}
             </a>
           ))}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setIsOpen(false);
-              const hero = document.querySelector("#hero");
-              if (hero) hero.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="bg-accent text-accent-foreground px-8 py-3 rounded-lg font-semibold text-base hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300 mt-4"
-          >
-            Enroll Now
-          </a>
+          {user ? (
+            <>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <User className="w-5 h-5" />
+                <span className="text-white font-medium text-lg">{user.name}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors duration-300 text-lg"
+              >
+                <LogOut className="w-5 h-5" />
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/signin"
+                onClick={() => setIsOpen(false)}
+                className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+              >
+                Sign In
+              </Link>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsOpen(false);
+                  const hero = document.querySelector("#hero");
+                  if (hero) hero.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="bg-accent text-accent-foreground px-8 py-3 rounded-lg font-semibold text-base hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300 mt-4"
+              >
+                Enroll Now
+              </a>
+            </>
+          )}
         </div>
       </div>
     </nav>
