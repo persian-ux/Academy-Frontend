@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Shield } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { logout } from "@/store/slices/authSlice";
 
@@ -122,6 +122,15 @@ export default function Navbar() {
                   {user.role}
                 </span>
               </div>
+              {user.role === "Admin" && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-sm font-medium"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 text-muted-foreground hover:text-white transition-colors duration-300 text-sm"
@@ -189,6 +198,16 @@ export default function Navbar() {
                 <User className="w-5 h-5" />
                 <span className="text-white font-medium text-lg">{user.name}</span>
               </div>
+              {user.role === "Admin" && (
+                <Link
+                  to="/admin"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-lg font-medium"
+                >
+                  <Shield className="w-5 h-5" />
+                  Admin Panel
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors duration-300 text-lg"

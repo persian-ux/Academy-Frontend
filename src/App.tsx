@@ -10,8 +10,17 @@ import Footer from "@/components/Footer";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import Dashboard from "@/pages/Dashboard";
+import AdminLayout from "@/components/admin/AdminLayout";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ManageUsers from "@/pages/admin/ManageUsers";
+import ManageCourses from "@/pages/admin/ManageCourses";
+import ManageAttendance from "@/pages/admin/ManageAttendance";
+import ManageTests from "@/pages/admin/ManageTests";
+import Reports from "@/pages/admin/Reports";
+import MonthlyReports from "@/pages/admin/MonthlyReports";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import PublicRoute from "@/components/auth/PublicRoute";
+import AdminRoute from "@/components/auth/AdminRoute";
 
 function HomePage() {
   return (
@@ -56,6 +65,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<ManageUsers />} />
+            <Route path="courses" element={<ManageCourses />} />
+            <Route path="attendance" element={<ManageAttendance />} />
+            <Route path="tests" element={<ManageTests />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="monthly-reports" element={<MonthlyReports />} />
+          </Route>
         </Routes>
       </div>
     </Provider>
