@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,7 @@ import { signupUser, clearError } from "@/store/slices/authSlice";
 
 export default function SignUp() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { isLoading, error, user } = useAppSelector((state) => state.auth);
+  const { isLoading, error } = useAppSelector((state) => state.auth);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,13 +26,6 @@ export default function SignUp() {
 
   const passwordsMatch = password && confirmPassword && password === confirmPassword;
   const passwordsMismatch = confirmPassword && password !== confirmPassword;
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/", { replace: true });
-    }
-  }, [user, navigate]);
 
   // Clear error on unmount
   useEffect(() => {
