@@ -1,24 +1,21 @@
 import api from "./api";
-import type { User, CreateUserPayload, UpdateUserPayload, ApiResponse } from "@/types/user";
+import type { User as UserType } from "@/types/user";
 
-export const userService = {
-  list: async (): Promise<ApiResponse<User[]>> => {
-    const response = await api.get<ApiResponse<User[]>>("/users");
-    return response.data;
-  },
+// Re-export User type for backward compatibility with existing imports
+export type { UserType as User };
 
-  create: async (data: CreateUserPayload): Promise<ApiResponse<User>> => {
-    const response = await api.post<ApiResponse<User>>("/users", data);
+export const getAllUsers = async (): Promise<{ success: boolean; message: string; data: UserType[] }> => {
+  try {
+    const response = await api.get("/users");
     return response.data;
-  },
-
-  update: async (id: number, data: UpdateUserPayload): Promise<ApiResponse<User>> => {
-    const response = await api.put<ApiResponse<User>>(`/users/${id}`, data);
-    return response.data;
-  },
-
-  delete: async (id: number): Promise<ApiResponse<null>> => {
-    const response = await api.delete<ApiResponse<null>>(`/users/${id}`);
-    return response.data;
-  },
+  } catch {
+    return { success: false, message: "Failed to fetch users", data: [] };
+  }
 };
+
+// Backward-compatible export for existing code that imports { userService }
+export const userService = {
+  getAllUsers,
+  list: getAllUsers,
+};
+

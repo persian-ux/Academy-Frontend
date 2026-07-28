@@ -2,12 +2,12 @@ export type Role = "Admin" | "Teacher" | "Student";
 export type GradeLevel = "8th" | "9th" | "10th" | "11th" | "12th";
 
 export interface User {
-  userId: number;
+  user_id: number;
   name: string;
   email: string;
   role: Role;
   grade_level: GradeLevel | null;
-  createdAt: string | null;
+  created_at: string | null;
 }
 
 export interface CreateUserPayload {

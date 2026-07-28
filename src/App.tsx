@@ -16,8 +16,11 @@ import ManageUsers from "@/pages/admin/ManageUsers";
 import ManageCourses from "@/pages/admin/ManageCourses";
 import ManageAttendance from "@/pages/admin/ManageAttendance";
 import ManageTests from "@/pages/admin/ManageTests";
+import UploadMarks from "@/pages/admin/UploadMarks";
+import ClassMarks from "@/pages/admin/ClassMarks";
 import Reports from "@/pages/admin/Reports";
 import MonthlyReports from "@/pages/admin/MonthlyReports";
+import MyMarks from "@/pages/student/MyMarks";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import PublicRoute from "@/components/auth/PublicRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
@@ -78,9 +81,19 @@ function App() {
             <Route path="courses" element={<ManageCourses />} />
             <Route path="attendance" element={<ManageAttendance />} />
             <Route path="tests" element={<ManageTests />} />
+            <Route path="upload-marks" element={<UploadMarks />} />
+            <Route path="class-marks" element={<ClassMarks />} />
             <Route path="reports" element={<Reports />} />
             <Route path="monthly-reports" element={<MonthlyReports />} />
           </Route>
+          <Route
+            path="/my-marks"
+            element={
+              <ProtectedRoute>
+                <MyMarks />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </div>
     </Provider>

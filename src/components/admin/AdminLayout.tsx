@@ -7,6 +7,8 @@ import {
   ClipboardCheck,
   FileText,
   BarChart3,
+  Upload,
+  GraduationCap,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -17,6 +19,8 @@ const sidebarItems = [
   { label: "Courses", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
   { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/attendance" },
   { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/admin/tests" },
+  { label: "Upload Marks", icon: <Upload className="w-5 h-5" />, path: "/admin/upload-marks" },
+  { label: "Class Marks", icon: <GraduationCap className="w-5 h-5" />, path: "/admin/class-marks" },
   { label: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/reports" },
   { label: "Monthly Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/monthly-reports" },
 ];

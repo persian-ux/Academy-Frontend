@@ -180,7 +180,7 @@ export default function ManageAttendance() {
       });
 
       if (res.success) {
-        const student = allStudents.find((s) => s.userId === markStudentId);
+        const student = allStudents.find((s) => s.user_id === markStudentId);
         const studentName = student?.name || "Unknown";
         setMarkSuccess(
           `Attendance marked for ${studentName} (${markGrade}) on ${markDate} as ${markStatus}`
@@ -367,7 +367,7 @@ export default function ManageAttendance() {
                     {markGrade ? `Select student from ${markGrade}` : "Select a grade first"}
                   </option>
                   {getStudentsByGrade(markGrade).map((s) => (
-                    <option key={s.userId} value={s.userId}>
+                    <option key={s.user_id} value={s.user_id}>
                       {s.name} ({s.email})
                     </option>
                   ))}
@@ -495,7 +495,7 @@ export default function ManageAttendance() {
 
           {markErrors.length > 0 && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-              <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3">
                 <div className="p-1 rounded-full bg-red-500/20">
                   <AlertCircle className="w-4 h-4 text-red-400" />
                 </div>
@@ -570,7 +570,7 @@ export default function ManageAttendance() {
                     {historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"}
                   </option>
                   {getStudentsByGrade(historyGrade).map((s) => (
-                    <option key={s.userId} value={s.userId}>
+                    <option key={s.user_id} value={s.user_id}>
                       {s.name} ({s.email})
                     </option>
                   ))}
@@ -709,7 +709,7 @@ export default function ManageAttendance() {
                     {reportGrade ? `Choose student from ${reportGrade}` : "Select a grade first"}
                   </option>
                   {getStudentsByGrade(reportGrade).map((s) => (
-                    <option key={s.userId} value={s.userId}>
+                    <option key={s.user_id} value={s.user_id}>
                       {s.name} ({s.email})
                     </option>
                   ))}

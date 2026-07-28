@@ -43,7 +43,7 @@ export default function ManageCourses() {
 
   const openCreate = () => {
     setEditingCourse(null);
-    setForm({ title: "", description: "", teacherId: teachers[0]?.userId || 0 });
+    setForm({ title: "", description: "", teacherId: teachers[0]?.user_id || 0 });
     setShowModal(true);
     setError("");
   };
@@ -205,7 +205,7 @@ export default function ManageCourses() {
                 >
                   <option value={0}>Select a teacher</option>
                   {teachers.map((t) => (
-                    <option key={t.userId} value={t.userId}>
+                    <option key={t.user_id} value={t.user_id}>
                       {t.name} ({t.email})
                     </option>
                   ))}
