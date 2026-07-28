@@ -1,4 +1,5 @@
 import api from "./api";
+import type { AxiosError } from "axios";
 
 // ==================== COURSE MANAGEMENT ====================
 export interface CourseData {
@@ -89,58 +90,76 @@ export const deleteCourse = async (
 
 // ==================== ATTENDANCE ====================
 export interface AttendanceRecord {
-  id: number;
-  studentId: number;
-  studentName: string;
-  courseId: number;
-  courseName: string;
+  attendance_id: number;
+  student_id: number;
+  course_id: number;
+  course_name: string;
   date: string;
-  status: "present" | "absent" | "late";
+  status: "Present" | "Absent" | "Late" | "Excused";
 }
 
-export const getAttendance = async (params?: {
-  courseId?: number;
-  date?: string;
-}): Promise<{ success: boolean; records: AttendanceRecord[] }> => {
-  try {
-    const response = await api.get("/attendance", { params });
-    const res = response.data;
-    if (res.success && Array.isArray(res.data)) {
-      return { success: true, records: res.data };
-    }
-    return { success: false, records: [] };
-  } catch {
-    return { success: false, records: [] };
-  }
-};
+export interface MonthlyReportData {
+  student_id: number;
+  student_name: string;
+  month: string;
+  year: number;
+  summary: {
+    present: number;
+    absent: number;
+    late: number;
+    excused: number;
+    total: number;
+  };
+  details: AttendanceRecord[];
+}
 
 export const markAttendance = async (data: {
-  studentId: number;
-  courseId: number;
+  student_id: number;
+  course_id: number;
   date: string;
-  status: string;
-}): Promise<{ success: boolean; message: string }> => {
+  status: "Present" | "Absent" | "Late" | "Excused";
+}): Promise<{ success: boolean; message: string; data?: { attendance_id: number }; errors?: string[] }> => {
   try {
     const response = await api.post("/attendance", data);
     return response.data;
-  } catch {
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      return axiosError.response.data;
+    }
     return { success: false, message: "Attendance endpoint not available" };
   }
 };
 
-export const markBulkAttendance = async (
-  records: {
-    studentId: number;
-    courseId: number;
-    date: string;
-    status: string;
-  }[]
-): Promise<{ success: boolean; message: string }> => {
+export const getAttendanceHistory = async (
+  studentId: number
+): Promise<{ success: boolean; message: string; data?: AttendanceRecord[] }> => {
   try {
-    const response = await api.post("/attendance/bulk", { records });
+    const response = await api.get(`/attendance/${studentId}`);
     return response.data;
-  } catch {
-    return { success: false, message: "Attendance endpoint not available" };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ success: boolean; message: string }>;
+    if (axiosError.response?.data) {
+      return axiosError.response.data;
+    }
+    return { success: false, message: "Failed to fetch attendance history" };
+  }
+};
+
+export const getMonthlyAttendanceReport = async (params: {
+  studentId: number;
+  month: number;
+  year: number;
+}): Promise<{ success: boolean; message: string; data?: MonthlyReportData }> => {
+  try {
+    const response = await api.get("/attendance/report", { params });
+    return response.data;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ success: boolean; message: string }>;
+    if (axiosError.response?.data) {
+      return axiosError.response.data;
+    }
+    return { success: false, message: "Failed to fetch monthly report" };
   }
 };
 
