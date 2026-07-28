@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Check, X, Clock, Loader2 } from "lucide-react";
-import { getAttendance, getCourses, getUsers, markBulkAttendance, type CourseData, type UserData } from "@/services/adminService";
+import { getAttendance, getCourses, markBulkAttendance, type CourseData } from "@/services/adminService";
+import { userService } from "@/services/userService";
+import type { User } from "@/types/user";
 
 export default function ManageAttendance() {
   const [courses, setCourses] = useState<CourseData[]>([]);
-  const [students, setStudents] = useState<UserData[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<number>(0);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(true);
@@ -19,10 +21,15 @@ export default function ManageAttendance() {
       try {
         setLoading(true);
         setError("");
-        const [coursesRes, usersRes] = await Promise.all([getCourses(), getUsers()]);
+        const [coursesRes, usersRes] = await Promise.all([
+          getCourses(),
+          userService.list(),
+        ]);
         if (cancelled) return;
         if (coursesRes.success) setCourses(coursesRes.courses);
-        if (usersRes.success) setStudents(usersRes.users.filter((u) => u.role === "Student"));
+        if (usersRes.success && usersRes.data) {
+          setStudents(usersRes.data.filter((u: User) => u.role === "Student"));
+        }
       } catch {
         if (!cancelled) setError("Failed to load data");
       } finally {
@@ -30,7 +37,9 @@ export default function ManageAttendance() {
       }
     };
     loadData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -44,7 +53,9 @@ export default function ManageAttendance() {
         if (cancelled) return;
         if (res.success) {
           const map: Record<number, "present" | "absent" | "late"> = {};
-          res.records.forEach((r) => { map[r.studentId] = r.status; });
+          res.records.forEach((r) => {
+            map[r.studentId] = r.status;
+          });
           setAttendanceMap(map);
         }
       } catch {
@@ -54,7 +65,9 @@ export default function ManageAttendance() {
       }
     };
     loadAttendance();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCourse, selectedDate]);
 
   const setStatus = (studentId: number, status: "present" | "absent" | "late") => {
@@ -88,10 +101,14 @@ export default function ManageAttendance() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "present": return <Check className="w-4 h-4 text-green-400" />;
-      case "absent": return <X className="w-4 h-4 text-red-400" />;
-      case "late": return <Clock className="w-4 h-4 text-yellow-400" />;
-      default: return null;
+      case "present":
+        return <Check className="w-4 h-4 text-green-400" />;
+      case "absent":
+        return <X className="w-4 h-4 text-red-400" />;
+      case "late":
+        return <Clock className="w-4 h-4 text-yellow-400" />;
+      default:
+        return null;
     }
   };
 
@@ -145,7 +162,9 @@ export default function ManageAttendance() {
           >
             <option value={0}>Select a course</option>
             {courses.map((c) => (
-              <option key={c.courseId} value={c.courseId}>{c.title}</option>
+              <option key={c.courseId} value={c.courseId}>
+                {c.title}
+              </option>
             ))}
           </select>
         </div>

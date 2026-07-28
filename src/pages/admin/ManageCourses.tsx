@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
-import { getCourses, createCourse, updateCourse, deleteCourse, getUsers, type CourseData, type UserData } from "@/services/adminService";
+import { getCourses, createCourse, updateCourse, deleteCourse, type CourseData } from "@/services/adminService";
+import { userService } from "@/services/userService";
+import type { User } from "@/types/user";
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<CourseData[]>([]);
-  const [teachers, setTeachers] = useState<UserData[]>([]);
+  const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
@@ -18,10 +20,15 @@ export default function ManageCourses() {
       try {
         setLoading(true);
         setError("");
-        const [coursesRes, usersRes] = await Promise.all([getCourses(), getUsers()]);
+        const [coursesRes, usersRes] = await Promise.all([
+          getCourses(),
+          userService.list(),
+        ]);
         if (cancelled) return;
         if (coursesRes.success) setCourses(coursesRes.courses);
-        if (usersRes.success) setTeachers(usersRes.users.filter((u) => u.role === "Teacher"));
+        if (usersRes.success && usersRes.data) {
+          setTeachers(usersRes.data.filter((u: User) => u.role === "Teacher"));
+        }
       } catch {
         if (!cancelled) setError("Failed to load data");
       } finally {
@@ -29,7 +36,9 @@ export default function ManageCourses() {
       }
     };
     loadData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const openCreate = () => {
@@ -60,9 +69,14 @@ export default function ManageCourses() {
       }
       setShowModal(false);
       // Reload data after successful operation
-      const [coursesRes, usersRes] = await Promise.all([getCourses(), getUsers()]);
+      const [coursesRes, usersRes] = await Promise.all([
+        getCourses(),
+        userService.list(),
+      ]);
       if (coursesRes.success) setCourses(coursesRes.courses);
-      if (usersRes.success) setTeachers(usersRes.users.filter((u) => u.role === "Teacher"));
+      if (usersRes.success && usersRes.data) {
+        setTeachers(usersRes.data.filter((u: User) => u.role === "Teacher"));
+      }
     } catch {
       setError("Operation failed");
     } finally {
@@ -76,9 +90,14 @@ export default function ManageCourses() {
       setError("");
       const res = await deleteCourse(courseId);
       if (res.success) {
-        const [coursesRes, usersRes] = await Promise.all([getCourses(), getUsers()]);
+        const [coursesRes, usersRes] = await Promise.all([
+          getCourses(),
+          userService.list(),
+        ]);
         if (coursesRes.success) setCourses(coursesRes.courses);
-        if (usersRes.success) setTeachers(usersRes.users.filter((u) => u.role === "Teacher"));
+        if (usersRes.success && usersRes.data) {
+          setTeachers(usersRes.data.filter((u: User) => u.role === "Teacher"));
+        }
       } else {
         setError(res.message);
       }
