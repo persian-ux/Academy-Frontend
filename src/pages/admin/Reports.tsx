@@ -1,0 +1,144 @@
+import { useState, useEffect } from "react";
+import { Loader2, Download } from "lucide-react";
+import { getReports, getCourses, type StudentReport, type CourseData } from "@/services/adminService";
+
+export default function Reports() {
+  const [reports, setReports] = useState<StudentReport[]>([]);
+  const [courses, setCourses] = useState<CourseData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCourse, setSelectedCourse] = useState<number>(0);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const [reportsRes, coursesRes] = await Promise.all([
+          getReports(selectedCourse ? { courseId: selectedCourse } : undefined),
+          getCourses(),
+        ]);
+        if (cancelled) return;
+        if (reportsRes.success) setReports(reportsRes.reports);
+        if (coursesRes.success) setCourses(coursesRes.courses);
+      } catch {
+        if (!cancelled) setError("Failed to load reports");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadData();
+    return () => { cancelled = true; };
+  }, [selectedCourse]);
+
+  const getGradeColor = (grade: string) => {
+    const colors: Record<string, string> = {
+      A: "text-green-400",
+      B: "text-blue-400",
+      C: "text-yellow-400",
+      D: "text-orange-400",
+      F: "text-red-400",
+    };
+    return colors[grade] || "text-muted-foreground";
+  };
+
+  const handleExport = () => {
+    const headers = ["Student", "Course", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
+    const rows = reports.map((r) => [r.studentName, r.courseName, r.totalClasses, r.attendedClasses, r.attendancePercentage.toFixed(1) + "%", r.testScore, r.totalMarks, r.grade]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reports-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Reports</h2>
+          <p className="text-muted-foreground text-sm mt-1">Student performance and attendance reports</p>
+        </div>
+        {reports.length > 0 && (
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">{error}</div>
+      )}
+
+      <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
+        <label className="block text-sm text-muted-foreground mb-1">Filter by Course</label>
+        <select
+          value={selectedCourse}
+          onChange={(e) => setSelectedCourse(Number(e.target.value))}
+          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+        >
+          <option value={0}>All Courses</option>
+          {courses.map((c) => (
+            <option key={c.courseId} value={c.courseId}>{c.title}</option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-white/5 border-b border-white/10">
+                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Student</th>
+                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Course</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Classes</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attended</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attendance %</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Test Score</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Total</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.map((r, idx) => (
+                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="p-4 text-white text-sm">{r.studentName}</td>
+                  <td className="p-4 text-muted-foreground text-sm">{r.courseName}</td>
+                  <td className="p-4 text-white text-sm text-center">{r.totalClasses}</td>
+                  <td className="p-4 text-white text-sm text-center">{r.attendedClasses}</td>
+                  <td className="p-4 text-sm text-center">
+                    <span className={r.attendancePercentage >= 75 ? "text-green-400" : "text-red-400"}>
+                      {r.attendancePercentage.toFixed(1)}%
+                    </span>
+                  </td>
+                  <td className="p-4 text-white text-sm text-center">{r.testScore}</td>
+                  <td className="p-4 text-white text-sm text-center">{r.totalMarks}</td>
+                  <td className="p-4 text-sm text-center font-semibold">
+                    <span className={getGradeColor(r.grade)}>{r.grade}</span>
+                  </td>
+                </tr>
+              ))}
+              {reports.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">No reports available</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
