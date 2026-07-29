@@ -1,26 +1,12 @@
-# Sign In & Sign Up Pages - Implementation Progress
+# Admin Dashboard & Manage Users Fix
 
-## Completed Steps
-- [x] Install react-router-dom dependency
-- [x] Create `src/pages/` directory
-- [x] Create `src/components/PasswordStrengthBar.tsx`
-- [x] Create `src/components/StudyImageSection.tsx`
-- [x] Create `src/pages/SignIn.tsx` - Integrated with Redux + API
-- [x] Create `src/pages/SignUp.tsx` - Integrated with Redux + API
-- [x] Modify `src/main.tsx` - Add BrowserRouter
-- [x] Modify `src/App.tsx` - Add routes
-- [x] Modify `src/components/Navbar.tsx` - Add Sign In link
-- [x] **Backend**: Added POST `/api/auth/register` endpoint
-- [x] **Backend**: Added `registerUser` service (password hashing, user creation, JWT generation)
-- [x] **Backend**: Added `validateRegisterInput` validator
-- [x] **Frontend**: Updated SignUp to dispatch `signupUser` thunk calling real API
-- [x] **Build**: Verified - builds clean (zero errors)
-
-## Auth Flow
-- `/signin` → POST `/api/auth/login` → JWT stored → redirect to home
-- `/signup` → POST `/api/auth/register` → JWT stored → redirect to home
-- Navbar shows user info + logout when authenticated, Sign In/Sign Up links when not
-- Error messages displayed inline from API responses
-- Loading spinners during API calls
-- Password strength indicator on signup
-
+## Completed
+- ✅ **Admin Dashboard Stats** (`src/services/adminService.ts`): Added fallback logic to aggregate stats from individual `/users`, `/courses`, `/tests` endpoints when the dedicated `/dashboard/stats` endpoint fails
+- ✅ **User Creation API** (`src/services/userService.ts`): Added `createUser()` function that posts to `/auth/register` with name, email, password, role, and grade_level
+- ✅ **Manage Users Page** (`src/pages/admin/ManageUsers.tsx`): 
+  - Added "Create User" button in the page header
+  - Added modal dialog with form fields: Name, Email, Password, Role (Student/Teacher toggle)
+  - When "Student" is selected: shows Grade Level dropdown (8th-12th) and Course selector
+  - When "Teacher" is selected: hides grade/course fields
+  - Toast notifications for success/error feedback
+  - Auto-refreshes user list after creation

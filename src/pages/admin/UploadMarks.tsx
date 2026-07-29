@@ -7,6 +7,13 @@ import { uploadSingleMark, uploadBatchMarks, getMarksByTest } from "@/services/m
 import type { Test } from "@/types/test";
 import type { Mark } from "@/types/mark";
 import type { User } from "@/services/userService";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 export default function UploadMarks() {
   const [searchParams] = useSearchParams();
@@ -185,22 +192,25 @@ export default function UploadMarks() {
       {/* Test Selector */}
       <div className="mb-6">
         <label className="block text-sm text-muted-foreground mb-2">Select Test</label>
-        <select
-          value={selectedTestId || ""}
-          onChange={(e) => {
-            setSelectedTestId(e.target.value ? Number(e.target.value) : null);
+        <Select
+          value={selectedTestId ? String(selectedTestId) : undefined}
+          onValueChange={(value) => {
+            setSelectedTestId(Number(value));
             setBatchMarks({});
             setExistingMarks([]);
           }}
-          className="w-full max-w-md px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
         >
-          <option value="">-- Choose a test --</option>
-          {tests.map((test) => (
-            <option key={test.test_id} value={test.test_id}>
-              {test.title} ({test.grade} - {test.subject})
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full max-w-md">
+            <SelectValue placeholder="-- Choose a test --" />
+          </SelectTrigger>
+          <SelectContent>
+            {tests.map((test) => (
+              <SelectItem key={test.test_id} value={String(test.test_id)}>
+                {test.title} ({test.grade} - {test.subject})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {selectedTest && (
@@ -268,19 +278,21 @@ export default function UploadMarks() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-muted-foreground mb-1">Student</label>
-                  <select
-                    value={singleStudentId}
-                    onChange={(e) => setSingleStudentId(Number(e.target.value))}
-                    required
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                  <Select
+                    value={singleStudentId ? String(singleStudentId) : undefined}
+                    onValueChange={(value) => setSingleStudentId(Number(value))}
                   >
-                    <option value={0}>Select student</option>
-                    {gradeStudents.map((s) => (
-                      <option key={s.user_id} value={s.user_id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select student" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gradeStudents.map((s) => (
+                        <SelectItem key={s.user_id} value={String(s.user_id)}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

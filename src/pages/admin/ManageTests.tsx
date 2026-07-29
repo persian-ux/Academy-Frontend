@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, X, Loader2, Edit, Search, FileSpreadsheet } from "lucide-react";
+import { Plus, Trash2, X, Loader2, Edit, Search, FileSpreadsheet, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   getAllTests,
@@ -9,6 +9,21 @@ import {
   deleteTest as deleteTestApi,
 } from "@/services/testService";
 import type { Test, CreateTestPayload } from "@/types/test";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const GRADES = ["8th", "9th", "10th", "11th", "12th"];
 const SUBJECTS = ["Science", "Mathematics", "English", "Urdu", "Physics", "Chemistry", "Biology", "Computer Science", "Islamiat", "Pak Studies"];
@@ -41,6 +56,8 @@ export default function ManageTests() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [deletingTest, setDeletingTest] = useState<Test | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const showToast = (type: "success" | "error", message: string) => {
     setToast({ type, message });
@@ -120,19 +137,23 @@ export default function ManageTests() {
     }
   };
 
-  const handleDelete = async (testId: number) => {
-    if (!confirm("Are you sure you want to delete this test? This action cannot be undone.")) return;
+  const handleDelete = async () => {
+    if (!deletingTest) return;
+    setDeleting(true);
+    setError("");
     try {
-      setError("");
-      const res = await deleteTestApi(testId);
+      const res = await deleteTestApi(deletingTest.test_id);
       if (res.success) {
         showToast("success", "Test deleted successfully");
+        setDeletingTest(null);
         loadTests();
       } else {
         setError(res.message);
       }
     } catch {
       setError("Delete failed");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -245,34 +266,87 @@ export default function ManageTests() {
                   </td>
                   <td className="p-4 text-muted-foreground text-sm">{test.creator_name}</td>
                   <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEdit(test)}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
-                        title="Edit test"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => viewMarks(test.test_id)}
-                        className="p-2 hover:bg-primary/20 rounded-lg transition-colors text-muted-foreground hover:text-primary"
-                        title="Upload marks"
-                      >
-                        <FileSpreadsheet className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(test.test_id)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-muted-foreground hover:text-red-400"
-                        title="Delete test"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            title="More actions"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuLabel className="text-muted-foreground font-normal">
+                            {test.title}
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => openEdit(test)}>
+                            <Edit className="w-4 h-4 text-blue-400" />
+                            <span>Edit Test</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => viewMarks(test.test_id)}>
+                            <FileSpreadsheet className="w-4 h-4 text-primary" />
+                            <span>Upload Marks</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDeletingTest(test)}
+                            className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <span>Delete Test</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingTest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Delete Test</h3>
+              <button
+                onClick={() => setDeletingTest(null)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                disabled={deleting}
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to <span className="text-red-400 font-medium">permanently delete</span>{" "}
+              <span className="text-white font-medium">{deletingTest.title}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeletingTest(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-muted-foreground hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -303,27 +377,35 @@ export default function ManageTests() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-muted-foreground mb-1">Subject</label>
-                  <select
+                  <Select
                     value={form.subject}
-                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                    onValueChange={(value) => setForm({ ...form, subject: value })}
                   >
-                    {SUBJECTS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUBJECTS.map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm text-muted-foreground mb-1">Grade</label>
-                  <select
+                  <Select
                     value={form.grade}
-                    onChange={(e) => setForm({ ...form, grade: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                    onValueChange={(value) => setForm({ ...form, grade: value })}
                   >
-                    {GRADES.map((g) => (
-                      <option key={g} value={g}>{g} Grade</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GRADES.map((g) => (
+                        <SelectItem key={g} value={g}>{g} Grade</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -351,15 +433,19 @@ export default function ManageTests() {
               </div>
               <div>
                 <label className="block text-sm text-muted-foreground mb-1">Status</label>
-                <select
+                <Select
                   value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value as Test["status"] })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                  onValueChange={(value) => setForm({ ...form, status: value as Test["status"] })}
                 >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {error && <p className="text-red-400 text-sm">{error}</p>}
               <div className="flex gap-3 justify-end pt-2">

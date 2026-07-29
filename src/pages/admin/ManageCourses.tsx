@@ -1,10 +1,25 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, MoreVertical } from "lucide-react";
 import { getCourses, createCourse, updateCourse, deleteCourse, type CourseData } from "@/services/adminService";
 import { userService } from "@/services/userService";
 import type { User } from "@/types/user";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-export default function ManageCourses() {
+export default function ManageSections() {
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +28,8 @@ export default function ManageCourses() {
   const [form, setForm] = useState({ title: "", description: "", teacherId: 0 });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [deletingCourse, setDeletingCourse] = useState<CourseData | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,12 +101,14 @@ export default function ManageCourses() {
     }
   };
 
-  const handleDelete = async (courseId: number) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
+  const handleDelete = async () => {
+    if (!deletingCourse) return;
+    setDeleting(true);
+    setError("");
     try {
-      setError("");
-      const res = await deleteCourse(courseId);
+      const res = await deleteCourse(deletingCourse.courseId);
       if (res.success) {
+        setDeletingCourse(null);
         const [coursesRes, usersRes] = await Promise.all([
           getCourses(),
           userService.list(),
@@ -103,6 +122,8 @@ export default function ManageCourses() {
       }
     } catch {
       setError("Delete failed");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -110,15 +131,15 @@ export default function ManageCourses() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-white">Manage Courses</h2>
-          <p className="text-muted-foreground text-sm mt-1">Create and manage courses & classes</p>
+          <h2 className="text-2xl font-bold text-white">Manage Sections</h2>
+          <p className="text-muted-foreground text-sm mt-1">Create and manage sections & classes</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Course
+          Add Section
         </button>
       </div>
 
@@ -138,14 +159,34 @@ export default function ManageCourses() {
             <div key={course.courseId} className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all">
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-lg font-semibold text-white">{course.title}</h3>
-                <div className="flex gap-1">
-                  <button onClick={() => openEdit(course)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => handleDelete(course.courseId)} className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors text-muted-foreground hover:text-red-400">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      title="More actions"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel className="text-muted-foreground font-normal">
+                      {course.title}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => openEdit(course)}>
+                      <Pencil className="w-4 h-4 text-blue-400" />
+                      <span>Edit Section</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeletingCourse(course)}
+                      className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                      <span>Delete Section</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{course.description}</p>
               {course.teacherName && (
@@ -157,9 +198,51 @@ export default function ManageCourses() {
           ))}
           {courses.length === 0 && (
             <div className="col-span-full p-8 text-center text-muted-foreground">
-              No courses found
+              No sections found
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingCourse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Delete Section</h3>
+              <button
+                onClick={() => setDeletingCourse(null)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                disabled={deleting}
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to <span className="text-red-400 font-medium">permanently delete</span>{" "}
+              <span className="text-white font-medium">{deletingCourse.title}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeletingCourse(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-muted-foreground hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -169,7 +252,7 @@ export default function ManageCourses() {
           <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
-                {editingCourse ? "Edit Course" : "Create Course"}
+                {editingCourse ? "Edit Section" : "Create Section"}
               </h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-muted-foreground" />
@@ -198,18 +281,21 @@ export default function ManageCourses() {
               </div>
               <div>
                 <label className="block text-sm text-muted-foreground mb-1">Assigned Teacher</label>
-                <select
-                  value={form.teacherId}
-                  onChange={(e) => setForm({ ...form, teacherId: Number(e.target.value) })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                <Select
+                  value={form.teacherId ? String(form.teacherId) : undefined}
+                  onValueChange={(value) => setForm({ ...form, teacherId: Number(value) })}
                 >
-                  <option value={0}>Select a teacher</option>
-                  {teachers.map((t) => (
-                    <option key={t.user_id} value={t.user_id}>
-                      {t.name} ({t.email})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a teacher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teachers.map((t) => (
+                      <SelectItem key={t.user_id} value={String(t.user_id)}>
+                        {t.name} ({t.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {error && <p className="text-red-400 text-sm">{error}</p>}
               <div className="flex gap-3 justify-end">

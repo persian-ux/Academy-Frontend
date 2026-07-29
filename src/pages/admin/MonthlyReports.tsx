@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Loader2, Download, Calendar } from "lucide-react";
 import { getMonthlyReports, type StudentReport } from "@/services/adminService";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -49,7 +56,7 @@ export default function MonthlyReports() {
 
   const handleExport = () => {
     const monthName = getMonthName(selectedMonth);
-    const headers = ["Student", "Course", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
+    const headers = ["Student", "Section", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
     const rows = reports.map((r) => [r.studentName, r.courseName, r.totalClasses, r.attendedClasses, r.attendancePercentage.toFixed(1) + "%", r.testScore, r.totalMarks, r.grade]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -89,24 +96,36 @@ export default function MonthlyReports() {
             <Calendar className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Month:</span>
           </div>
-          <select
+          <Select
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+            onValueChange={(value) => setSelectedMonth(value)}
           >
-            {MONTHS.map((name, idx) => (
-              <option key={idx} value={String(idx + 1).padStart(2, "0")}>{name}</option>
-            ))}
-          </select>
-          <select
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((name, idx) => (
+                <SelectItem key={idx} value={String(idx + 1).padStart(2, "0")}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
             value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+            onValueChange={(value) => setSelectedYear(value)}
           >
-            {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="text-sm text-muted-foreground ml-auto">
             {getMonthName(selectedMonth)} {selectedYear} Report
           </div>
@@ -149,7 +168,7 @@ export default function MonthlyReports() {
               <thead>
                 <tr className="bg-white/5 border-b border-white/10">
                   <th className="text-left p-4 text-muted-foreground font-medium text-sm">Student</th>
-                  <th className="text-left p-4 text-muted-foreground font-medium text-sm">Course</th>
+                  <th className="text-left p-4 text-muted-foreground font-medium text-sm">Section</th>
                   <th className="text-center p-4 text-muted-foreground font-medium text-sm">Classes</th>
                   <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attended</th>
                   <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attendance %</th>

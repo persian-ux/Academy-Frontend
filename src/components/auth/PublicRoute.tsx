@@ -18,9 +18,9 @@ export default function PublicRoute({ children }: PublicRouteProps) {
     );
   }
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to admin if already authenticated
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin" replace />;
   }
 
   // Render children or nested routes

@@ -280,13 +280,56 @@ export const getDashboardStats = async (): Promise<{
   success: boolean;
   stats: DashboardStats;
 }> => {
+  // First, try the dedicated dashboard/stats endpoint
   try {
     const response = await api.get("/dashboard/stats");
     const res = response.data;
     if (res.success && res.data) {
       return { success: true, stats: res.data };
     }
-    return { success: false, stats: {} as DashboardStats };
+  } catch {
+    // Fallback: endpoint not available — will compute from individual endpoints
+  }
+
+  // Fallback: aggregate stats from individual working endpoints
+  try {
+    const [usersRes, coursesRes, testsRes] = await Promise.all([
+      api.get("/users"),
+      api.get("/courses"),
+      api.get("/tests"),
+    ]);
+
+    const usersData = usersRes.data?.data || usersRes.data?.users || [];
+    const users = Array.isArray(usersData) ? usersData : [];
+
+    const coursesData = coursesRes.data?.data || coursesRes.data?.courses || [];
+    const courses = Array.isArray(coursesData) ? coursesData : [];
+
+    const testsData = testsRes.data?.data || testsRes.data?.tests || [];
+    const tests = Array.isArray(testsData) ? testsData : [];
+
+    const stats: DashboardStats = {
+      totalUsers: users.length,
+      totalStudents: users.filter((u: { role?: string }) => u.role === "Student").length,
+      totalTeachers: users.filter((u: { role?: string }) => u.role === "Teacher").length,
+      totalCourses: courses.length,
+      totalTests: tests.length,
+      recentAttendance: 0,
+      monthlyReportsGenerated: 0,
+    };
+
+    // Try to get attendance count (non-blocking)
+    try {
+      const attendanceRes = await api.get("/attendance");
+      const attendanceData = attendanceRes.data?.data || attendanceRes.data?.records || [];
+      if (Array.isArray(attendanceData)) {
+        stats.recentAttendance = attendanceData.length;
+      }
+    } catch {
+      // attendance count defaults to 0
+    }
+
+    return { success: true, stats };
   } catch {
     return { success: false, stats: {} as DashboardStats };
   }

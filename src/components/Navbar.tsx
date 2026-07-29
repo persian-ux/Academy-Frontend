@@ -1,24 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, X, User, LogOut, Shield, ChevronDown } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
 import { logout } from "@/store/slices/authSlice";
-
-const navLinks = [
-  { label: "About", href: "#about" },
-  { label: "Achievements", href: "#achievements" },
-  { label: "Teachers", href: "#teachers" },
-  { label: "Contact", href: "#footer" },
-];
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Check if we're on a dashboard or admin page
+  const isDashboardPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/my-marks");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,15 +30,6 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    const target = document.querySelector(href);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
-    }
-    setIsOpen(false);
-  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -56,9 +50,9 @@ export default function Navbar() {
         <div className="absolute inset-0 scale-grid opacity-40 pointer-events-none" />
       )}
       <div className="container mx-auto h-full px-4 md:px-6 flex items-center justify-between relative z-10">
-        {/* Logo + Branding */}
-        <a
-          href="#"
+        {/* Logo + Branding - Clicking navigates to / */}
+        <Link
+          to="/"
           className="flex items-center gap-3 group"
         >
           <div className="animate-spin-slow group-hover:scale-110 transition-transform duration-300">
@@ -98,150 +92,270 @@ export default function Navbar() {
               Inspiring Future Scientists
             </span>
           </div>
-        </a>
+        </Link>
 
-        {/* Desktop Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => handleNavClick(e, link.href)}
-              className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
-            >
-              {link.label}
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-            </a>
-          ))}
-          {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="w-4 h-4" />
-                <span className="text-white font-medium">{user.name}</span>
-                <span className="px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/20 text-primary">
-                  {user.role}
-                </span>
-              </div>
-              {user.role === "Admin" && (
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-sm font-medium"
+        {isDashboardPage && user ? (
+          /* On dashboard pages: show user name dropdown on right */
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/5">
+                  <User className="w-4 h-4" />
+                  <span className="text-white font-medium">{user.name}</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 cursor-pointer text-red-400 focus:text-red-400"
                 >
-                  <Shield className="w-4 h-4" />
-                  Admin
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : (
+          /* Desktop Nav Links - Only show on non-dashboard pages */
+          <div className="hidden md:flex items-center gap-8">
+            {user ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span className="text-white font-medium">{user.name}</span>
+                  <span className="px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full bg-primary/20 text-primary">
+                    {user.role}
+                  </span>
+                </div>
+                {user.role === "Admin" && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-sm font-medium">
+                        <Shield className="w-4 h-4" />
+                        Admin
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
+                          <Shield className="w-4 h-4" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 cursor-pointer text-red-400 focus:text-red-400"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-white transition-colors duration-300 text-sm"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Nav Links */}
+                <a
+                  href="#about"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#about");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  About
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
+                  href="#achievements"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#achievements");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Achievements
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
+                  href="#teachers"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#teachers");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Teachers
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
+                  href="#footer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#footer");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Contact
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <Link
+                  to="/signin"
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Sign In
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
                 </Link>
-              )}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1.5 text-muted-foreground hover:text-white transition-colors duration-300 text-sm"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
-          ) : (
-            <>
-              <Link
-                to="/signin"
-                className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
-              >
-                Sign In
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-              </Link>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const hero = document.querySelector("#hero");
-                  if (hero) hero.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="bg-accent text-accent-foreground px-5 py-2.5 rounded-lg font-semibold text-sm hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300"
-              >
-                Enroll Now
-              </a>
-            </>
-          )}
-        </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const hero = document.querySelector("#hero");
+                    if (hero) hero.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="bg-accent text-accent-foreground px-5 py-2.5 rounded-lg font-semibold text-sm hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300"
+                >
+                  Enroll Now
+                </a>
+              </>
+            )}
+          </div>
+        )}
 
-        {/* Mobile Hamburger */}
-        <button
-          className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
+        {/* Mobile Hamburger - Only show on non-dashboard pages when no user or not logged in */}
+        {!isDashboardPage && (
+          <button
+            className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        )}
+      </div>
+
+      {/* Mobile Menu Overlay - Only show on non-dashboard pages */}
+      {!isDashboardPage && (
+        <div
+          className={`md:hidden fixed inset-0 top-20 z-40 transition-all duration-300 ${
+            isOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          }`}
         >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`md:hidden fixed inset-0 top-20 z-40 transition-all duration-300 ${
-          isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="glass h-full border-t border-white/10 flex flex-col items-center gap-6 py-8 px-4">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => handleNavClick(e, link.href)}
-              className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
-            >
-              {link.label}
-            </a>
-          ))}
-          {user ? (
-            <>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <User className="w-5 h-5" />
-                <span className="text-white font-medium text-lg">{user.name}</span>
-              </div>
-              {user.role === "Admin" && (
-                <Link
-                  to="/admin"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-lg font-medium"
+          <div className="glass h-full border-t border-white/10 flex flex-col items-center gap-6 py-8 px-4">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <User className="w-5 h-5" />
+                  <span className="text-white font-medium text-lg">{user.name}</span>
+                </div>
+                {user.role === "Admin" && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-lg font-medium"
+                  >
+                    <Shield className="w-5 h-5" />
+                    Admin Panel
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors duration-300 text-lg"
                 >
-                  <Shield className="w-5 h-5" />
-                  Admin Panel
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href="#about"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#about");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  About
+                </a>
+                <a
+                  href="#achievements"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#achievements");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Achievements
+                </a>
+                <a
+                  href="#teachers"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#teachers");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Teachers
+                </a>
+                <a
+                  href="#footer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#footer");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Contact
+                </a>
+                <Link
+                  to="/signin"
+                  onClick={() => setIsOpen(false)}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Sign In
                 </Link>
-              )}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors duration-300 text-lg"
-              >
-                <LogOut className="w-5 h-5" />
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/signin"
-                onClick={() => setIsOpen(false)}
-                className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
-              >
-                Sign In
-              </Link>
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsOpen(false);
-                  const hero = document.querySelector("#hero");
-                  if (hero) hero.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="bg-accent text-accent-foreground px-8 py-3 rounded-lg font-semibold text-base hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300 mt-4"
-              >
-                Enroll Now
-              </a>
-            </>
-          )}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const hero = document.querySelector("#hero");
+                    if (hero) hero.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="bg-accent text-accent-foreground px-8 py-3 rounded-lg font-semibold text-base hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300 mt-4"
+                >
+                  Enroll Now
+                </a>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }
-

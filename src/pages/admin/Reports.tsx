@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Loader2, Download } from "lucide-react";
 import { getReports, getCourses, type StudentReport, type CourseData } from "@/services/adminService";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 export default function Reports() {
   const [reports, setReports] = useState<StudentReport[]>([]);
@@ -44,7 +51,7 @@ export default function Reports() {
   };
 
   const handleExport = () => {
-    const headers = ["Student", "Course", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
+    const headers = ["Student", "Section", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
     const rows = reports.map((r) => [r.studentName, r.courseName, r.totalClasses, r.attendedClasses, r.attendancePercentage.toFixed(1) + "%", r.testScore, r.totalMarks, r.grade]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -79,17 +86,23 @@ export default function Reports() {
       )}
 
       <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
-        <label className="block text-sm text-muted-foreground mb-1">Filter by Course</label>
-        <select
-          value={selectedCourse}
-          onChange={(e) => setSelectedCourse(Number(e.target.value))}
-          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+        <label className="block text-sm text-muted-foreground mb-1">Filter by Section</label>
+        <Select
+          value={String(selectedCourse)}
+          onValueChange={(value) => setSelectedCourse(Number(value))}
         >
-          <option value={0}>All Courses</option>
-          {courses.map((c) => (
-            <option key={c.courseId} value={c.courseId}>{c.title}</option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full max-w-md">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">All Sections</SelectItem>
+            {courses.map((c) => (
+              <SelectItem key={c.courseId} value={String(c.courseId)}>
+                {c.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -102,7 +115,7 @@ export default function Reports() {
             <thead>
               <tr className="bg-white/5 border-b border-white/10">
                 <th className="text-left p-4 text-muted-foreground font-medium text-sm">Student</th>
-                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Course</th>
+                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Section</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Classes</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attended</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attendance %</th>

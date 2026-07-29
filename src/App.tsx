@@ -9,11 +9,10 @@ import TeachersCarousel from "@/components/TeachersCarousel";
 import Footer from "@/components/Footer";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
-import Dashboard from "@/pages/Dashboard";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ManageUsers from "@/pages/admin/ManageUsers";
-import ManageCourses from "@/pages/admin/ManageCourses";
+import ManageSections from "@/pages/admin/ManageCourses";
 import ManageAttendance from "@/pages/admin/ManageAttendance";
 import ManageTests from "@/pages/admin/ManageTests";
 import UploadMarks from "@/pages/admin/UploadMarks";
@@ -61,14 +60,6 @@ function App() {
             }
           />
           <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/admin"
             element={
               <AdminRoute>
@@ -78,7 +69,7 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<ManageUsers />} />
-            <Route path="courses" element={<ManageCourses />} />
+            <Route path="courses" element={<ManageSections />} />
             <Route path="attendance" element={<ManageAttendance />} />
             <Route path="tests" element={<ManageTests />} />
             <Route path="upload-marks" element={<UploadMarks />} />

@@ -16,7 +16,7 @@ import {
 const sidebarItems = [
   { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, path: "/admin" },
   { label: "Users", icon: <Users className="w-5 h-5" />, path: "/admin/users" },
-  { label: "Courses", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
+  { label: "Sections", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
   { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/attendance" },
   { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/admin/tests" },
   { label: "Upload Marks", icon: <Upload className="w-5 h-5" />, path: "/admin/upload-marks" },
@@ -71,11 +71,11 @@ export default function AdminLayout() {
 
         <div className="p-3 border-t border-white/10">
           <Link
-            to="/dashboard"
+            to="/admin"
             className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            {!collapsed && <span>Back to User Dashboard</span>}
+            {!collapsed && <span>Admin Panel</span>}
           </Link>
         </div>
       </aside>

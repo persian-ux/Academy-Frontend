@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,20 @@ import { loginUser, clearError } from "@/store/slices/authSlice";
 
 export default function SignIn() {
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { user, isLoading, error } = useAppSelector((state) => state.auth);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Navigate to admin after successful login
+  useEffect(() => {
+    if (user) {
+      navigate("/admin");
+    }
+  }, [user, navigate]);
 
   // Clear error on unmount
   useEffect(() => {
