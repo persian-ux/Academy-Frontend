@@ -51,7 +51,7 @@ export default function Reports() {
   };
 
   const handleExport = () => {
-    const headers = ["Student", "Course", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
+    const headers = ["Student", "Section", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
     const rows = reports.map((r) => [r.studentName, r.courseName, r.totalClasses, r.attendedClasses, r.attendancePercentage.toFixed(1) + "%", r.testScore, r.totalMarks, r.grade]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -86,7 +86,7 @@ export default function Reports() {
       )}
 
       <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
-        <label className="block text-sm text-muted-foreground mb-1">Filter by Course</label>
+        <label className="block text-sm text-muted-foreground mb-1">Filter by Section</label>
         <Select
           value={String(selectedCourse)}
           onValueChange={(value) => setSelectedCourse(Number(value))}
@@ -95,7 +95,7 @@ export default function Reports() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0">All Courses</SelectItem>
+            <SelectItem value="0">All Sections</SelectItem>
             {courses.map((c) => (
               <SelectItem key={c.courseId} value={String(c.courseId)}>
                 {c.title}
@@ -115,7 +115,7 @@ export default function Reports() {
             <thead>
               <tr className="bg-white/5 border-b border-white/10">
                 <th className="text-left p-4 text-muted-foreground font-medium text-sm">Student</th>
-                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Course</th>
+                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Section</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Classes</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attended</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attendance %</th>

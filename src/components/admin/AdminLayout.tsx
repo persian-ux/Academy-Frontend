@@ -16,7 +16,7 @@ import {
 const sidebarItems = [
   { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, path: "/admin" },
   { label: "Users", icon: <Users className="w-5 h-5" />, path: "/admin/users" },
-  { label: "Courses", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
+  { label: "Sections", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
   { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/attendance" },
   { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/admin/tests" },
   { label: "Upload Marks", icon: <Upload className="w-5 h-5" />, path: "/admin/upload-marks" },

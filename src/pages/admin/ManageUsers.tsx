@@ -522,13 +522,13 @@ export default function ManageUsers() {
                     </Select>
                   </div>
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Assign Course</label>
+                    <label className="block text-sm text-muted-foreground mb-1">Assign Section</label>
                     <Select
                       value={form.courseId ? String(form.courseId) : undefined}
                       onValueChange={(value) => setForm({ ...form, courseId: Number(value) })}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a course (optional)" />
+                      <SelectValue placeholder="Select a section (optional)" />
                       </SelectTrigger>
                       <SelectContent>
                         {courses
@@ -542,8 +542,8 @@ export default function ManageUsers() {
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
                       {courses.length > 0
-                        ? `${courses.filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", ""))).length} course(s) available`
-                        : "No courses available. Create courses first."}
+                        ? `${courses.filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", ""))).length} section(s) available`
+                        : "No sections available. Create sections first."}
                     </p>
                   </div>
                 </>

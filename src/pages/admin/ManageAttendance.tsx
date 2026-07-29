@@ -170,7 +170,7 @@ export default function ManageAttendance() {
   // ============ TAB 1: Mark Attendance ============
   const handleMarkAttendance = async () => {
     if (!markStudentId || !markCourseId) {
-      setMarkError("Please select a student, course, and grade");
+      setMarkError("Please select a student, section, and grade");
       return;
     }
     setMarkSubmitting(true);
@@ -387,10 +387,10 @@ export default function ManageAttendance() {
                 )}
               </div>
 
-              {/* Course Select */}
+              {/* Section Select */}
               <div>
                 <label className="block text-sm text-muted-foreground mb-1.5">
-                  Course
+                  Section
                 </label>
                 <Select
                   value={markCourseId ? String(markCourseId) : undefined}
@@ -402,7 +402,7 @@ export default function ManageAttendance() {
                   }}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a course" />
+                  <SelectValue placeholder="Select a section" />
                   </SelectTrigger>
                   <SelectContent>
                     {courses.map((c) => (
@@ -630,7 +630,7 @@ export default function ManageAttendance() {
                     <th className="text-left p-4 text-muted-foreground font-medium text-sm">
                       <div className="flex items-center gap-1">
                         <BookOpen className="w-3.5 h-3.5" />
-                        Course
+                        Section
                       </div>
                     </th>
                     <th className="text-center p-4 text-muted-foreground font-medium text-sm">
@@ -850,8 +850,8 @@ export default function ManageAttendance() {
                         </th>
                         <th className="text-left p-4 text-muted-foreground font-medium text-sm">
                           <div className="flex items-center gap-1">
-                            <BookOpen className="w-3.5 h-3.5" />
-                            Course
+                        <BookOpen className="w-3.5 h-3.5" />
+                        Section
                           </div>
                         </th>
                         <th className="text-center p-4 text-muted-foreground font-medium text-sm">

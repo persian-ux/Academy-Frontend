@@ -56,7 +56,7 @@ export default function MonthlyReports() {
 
   const handleExport = () => {
     const monthName = getMonthName(selectedMonth);
-    const headers = ["Student", "Course", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
+    const headers = ["Student", "Section", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
     const rows = reports.map((r) => [r.studentName, r.courseName, r.totalClasses, r.attendedClasses, r.attendancePercentage.toFixed(1) + "%", r.testScore, r.totalMarks, r.grade]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -168,7 +168,7 @@ export default function MonthlyReports() {
               <thead>
                 <tr className="bg-white/5 border-b border-white/10">
                   <th className="text-left p-4 text-muted-foreground font-medium text-sm">Student</th>
-                  <th className="text-left p-4 text-muted-foreground font-medium text-sm">Course</th>
+                  <th className="text-left p-4 text-muted-foreground font-medium text-sm">Section</th>
                   <th className="text-center p-4 text-muted-foreground font-medium text-sm">Classes</th>
                   <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attended</th>
                   <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attendance %</th>

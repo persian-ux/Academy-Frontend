@@ -16,9 +16,9 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Stats Card */}
           <div className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all duration-300">
-            <h3 className="text-lg font-semibold text-white mb-2">Courses</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">Sections</h3>
             <p className="text-3xl font-bold text-primary">0</p>
-            <p className="text-sm text-muted-foreground mt-1">Enrolled courses</p>
+            <p className="text-sm text-muted-foreground mt-1">Enrolled sections</p>
           </div>
 
           <div className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all duration-300">

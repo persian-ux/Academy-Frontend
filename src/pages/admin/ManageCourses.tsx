@@ -19,7 +19,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-export default function ManageCourses() {
+export default function ManageSections() {
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,15 +131,15 @@ export default function ManageCourses() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-white">Manage Courses</h2>
-          <p className="text-muted-foreground text-sm mt-1">Create and manage courses & classes</p>
+          <h2 className="text-2xl font-bold text-white">Manage Sections</h2>
+          <p className="text-muted-foreground text-sm mt-1">Create and manage sections & classes</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Course
+          Add Section
         </button>
       </div>
 
@@ -175,7 +175,7 @@ export default function ManageCourses() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => openEdit(course)}>
                       <Pencil className="w-4 h-4 text-blue-400" />
-                      <span>Edit Course</span>
+                      <span>Edit Section</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -183,7 +183,7 @@ export default function ManageCourses() {
                       className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
                     >
                       <Trash2 className="w-4 h-4 text-red-400" />
-                      <span>Delete Course</span>
+                      <span>Delete Section</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -198,7 +198,7 @@ export default function ManageCourses() {
           ))}
           {courses.length === 0 && (
             <div className="col-span-full p-8 text-center text-muted-foreground">
-              No courses found
+              No sections found
             </div>
           )}
         </div>
@@ -209,7 +209,7 @@ export default function ManageCourses() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-sm mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Delete Course</h3>
+              <h3 className="text-lg font-semibold text-white">Delete Section</h3>
               <button
                 onClick={() => setDeletingCourse(null)}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors"
@@ -252,7 +252,7 @@ export default function ManageCourses() {
           <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
-                {editingCourse ? "Edit Course" : "Create Course"}
+                {editingCourse ? "Edit Section" : "Create Section"}
               </h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-muted-foreground" />

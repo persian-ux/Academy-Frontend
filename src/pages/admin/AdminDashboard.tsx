@@ -49,7 +49,7 @@ export default function AdminDashboard() {
       color: "from-purple-500 to-purple-600",
     },
     {
-      label: "Courses",
+      label: "Sections",
       value: stats?.totalCourses ?? 0,
       icon: <BookOpen className="w-6 h-6" />,
       color: "from-orange-500 to-orange-600",
@@ -131,15 +131,15 @@ export default function AdminDashboard() {
             onClick={() => window.location.hash = "#users"}
           />
           <QuickActionCard
-            title="Manage Courses"
-            description="Add or update courses and classes"
+            title="Manage Sections"
+            description="Add or update sections and classes"
             icon={<BookOpen className="w-5 h-5" />}
             color="text-orange-400"
             onClick={() => window.location.hash = "#courses"}
           />
           <QuickActionCard
             title="Take Attendance"
-            description="Mark attendance for any course"
+            description="Mark attendance for any section"
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="text-green-400"
             onClick={() => window.location.hash = "#attendance"}
