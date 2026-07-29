@@ -8,6 +8,7 @@ export interface User {
   role: Role;
   grade_level: GradeLevel | null;
   created_at: string | null;
+  is_active?: boolean;
 }
 
 export interface CreateUserPayload {

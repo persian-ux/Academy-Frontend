@@ -1,6 +1,19 @@
-import { useState, useEffect } from "react";
-import { Plus, X, Loader2, Users as UsersIcon, Shield, GraduationCap, UserCheck } from "lucide-react";
-import { getAllUsers, createUser } from "@/services/userService";
+import { useState, useEffect, useRef } from "react";
+import {
+  Plus,
+  X,
+  Loader2,
+  Users as UsersIcon,
+  Shield,
+  GraduationCap,
+  UserCheck,
+  Pencil,
+  Trash2,
+  MoreVertical,
+  Power,
+  PowerOff,
+} from "lucide-react";
+import { getAllUsers, createUser, updateUser, deleteUser, toggleUserStatus } from "@/services/userService";
 import { getCourses, type CourseData } from "@/services/adminService";
 import type { User } from "@/services/userService";
 import type { GradeLevel } from "@/types/user";
@@ -31,8 +44,9 @@ export default function ManageUsers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Create user modal state
+  // Create/Edit user modal state
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -44,6 +58,17 @@ export default function ManageUsers() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // 3-dot dropdown menu state
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Delete confirmation state
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Status toggle state
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   const showToast = (type: "success" | "error", message: string) => {
     setToast({ type, message });
@@ -71,16 +96,51 @@ export default function ManageUsers() {
     loadUsers();
   }, []);
 
-  const openCreateModal = async () => {
-    setForm({ name: "", email: "", password: "", role: "Student", grade_level: "", courseId: 0 });
-    setFormError("");
-    // Load courses for the course selector
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuId]);
+
+  const loadCourses = async () => {
     try {
       const res = await getCourses();
       if (res.success) setCourses(res.courses);
     } catch {
       // silent
     }
+  };
+
+  const openCreateModal = async () => {
+    setEditingUser(null);
+    setForm({ name: "", email: "", password: "", role: "Student", grade_level: "", courseId: 0 });
+    setFormError("");
+    await loadCourses();
+    setShowModal(true);
+  };
+
+  const openEditModal = async (user: User) => {
+    setOpenMenuId(null);
+    setEditingUser(user);
+    setForm({
+      name: user.name,
+      email: user.email,
+      password: "",
+      role: user.role === "Admin" ? "Teacher" : (user.role as "Teacher" | "Student"),
+      grade_level: user.grade_level || "",
+      courseId: 0,
+    });
+    setFormError("");
+    await loadCourses();
     setShowModal(true);
   };
 
@@ -90,35 +150,110 @@ export default function ManageUsers() {
     setFormError("");
 
     try {
-      const payload: {
-        name: string;
-        email: string;
-        password: string;
-        role: "Teacher" | "Student";
-        grade_level?: GradeLevel | null;
-      } = {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: form.role,
-      };
+      if (editingUser) {
+        // Update existing user
+        const payload: {
+          name: string;
+          email: string;
+          role: "Teacher" | "Student";
+          grade_level?: GradeLevel | null;
+          password?: string;
+        } = {
+          name: form.name,
+          email: form.email,
+          role: form.role,
+        };
 
-      if (form.role === "Student") {
-        payload.grade_level = form.grade_level || null;
-      }
+        if (form.role === "Student") {
+          payload.grade_level = form.grade_level || null;
+        } else {
+          payload.grade_level = null;
+        }
 
-      const res = await createUser(payload);
-      if (res.success) {
-        showToast("success", `User "${form.name}" created successfully as ${form.role}`);
-        setShowModal(false);
-        loadUsers();
+        // Only send password if user entered a new one
+        if (form.password.trim() !== "") {
+          payload.password = form.password;
+        }
+
+        const res = await updateUser(editingUser.user_id, payload);
+        if (res.success) {
+          showToast("success", `User "${form.name}" updated successfully`);
+          setShowModal(false);
+          loadUsers();
+        } else {
+          setFormError(res.message);
+        }
       } else {
-        setFormError(res.message);
+        // Create new user
+        const payload: {
+          name: string;
+          email: string;
+          password: string;
+          role: "Teacher" | "Student";
+          grade_level?: GradeLevel | null;
+        } = {
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          role: form.role,
+        };
+
+        if (form.role === "Student") {
+          payload.grade_level = form.grade_level || null;
+        }
+
+        const res = await createUser(payload);
+        if (res.success) {
+          showToast("success", `User "${form.name}" created successfully as ${form.role}`);
+          setShowModal(false);
+          loadUsers();
+        } else {
+          setFormError(res.message);
+        }
       }
     } catch {
-      setFormError("Failed to create user");
+      setFormError(editingUser ? "Failed to update user" : "Failed to create user");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingUser) return;
+    setDeleting(true);
+    setFormError("");
+    try {
+      const res = await deleteUser(deletingUser.user_id);
+      if (res.success) {
+        showToast("success", `User "${deletingUser.name}" deleted permanently`);
+        setDeletingUser(null);
+        loadUsers();
+      } else {
+        showToast("error", res.message || "Failed to delete user");
+      }
+    } catch {
+      showToast("error", "Failed to delete user");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    setOpenMenuId(null);
+    setTogglingId(user.user_id);
+    try {
+      const newStatus = !user.is_active;
+      const res = await toggleUserStatus(user.user_id, newStatus);
+      if (res.success) {
+        showToast("success", `User "${user.name}" is now ${newStatus ? "active" : "inactive"}`);
+        loadUsers();
+      } else {
+        showToast("error", res.message || "Failed to update user status");
+      }
+    } catch {
+      showToast("error", "Failed to update user status");
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -148,7 +283,7 @@ export default function ManageUsers() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-white">Manage Users</h2>
-          <p className="text-muted-foreground text-sm mt-1">View all registered users and their roles</p>
+          <p className="text-muted-foreground text-sm mt-1">View, edit, activate/deactivate, and delete users</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -192,6 +327,8 @@ export default function ManageUsers() {
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Email</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Role</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Grade Level</th>
+              <th className="text-left p-4 text-muted-foreground font-medium text-sm">Status</th>
+              <th className="text-right p-4 text-muted-foreground font-medium text-sm">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -215,11 +352,86 @@ export default function ManageUsers() {
                 <td className="p-4 text-muted-foreground text-sm">
                   {user.grade_level || "—"}
                 </td>
+                <td className="p-4">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                      user.is_active === false
+                        ? "bg-red-500/20 text-red-400 border-red-500/30"
+                        : "bg-green-500/20 text-green-400 border-green-500/30"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        user.is_active === false ? "bg-red-400" : "bg-green-400"
+                      }`}
+                    />
+                    {user.is_active === false ? "Inactive" : "Active"}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <div className="flex items-center justify-end relative">
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
+                      className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
+                      title="More actions"
+                      disabled={togglingId === user.user_id}
+                    >
+                      {togglingId === user.user_id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <MoreVertical className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    {/* 3-dot Dropdown Menu */}
+                    {openMenuId === user.user_id && (
+                      <div
+                        ref={menuRef}
+                        className="absolute right-0 top-full mt-1 z-50 w-48 bg-card border border-white/10 rounded-lg shadow-xl overflow-hidden"
+                      >
+                        <button
+                          onClick={() => openEditModal(user)}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left"
+                        >
+                          <Pencil className="w-4 h-4 text-muted-foreground" />
+                          Edit User
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(user)}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left"
+                        >
+                          {user.is_active === false ? (
+                            <>
+                              <Power className="w-4 h-4 text-green-400" />
+                              Activate User
+                            </>
+                          ) : (
+                            <>
+                              <PowerOff className="w-4 h-4 text-yellow-400" />
+                              Deactivate User
+                            </>
+                          )}
+                        </button>
+                        <div className="border-t border-white/10" />
+                        <button
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            setDeletingUser(user);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Permanently Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                <td colSpan={6} className="p-8 text-center text-muted-foreground">
                   <UsersIcon className="w-8 h-8 mx-auto mb-2" />
                   No users found
                 </td>
@@ -229,12 +441,14 @@ export default function ManageUsers() {
         </table>
       </div>
 
-      {/* Create User Modal */}
+      {/* Create/Edit User Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Create New User</h3>
+              <h3 className="text-lg font-semibold text-white">
+                {editingUser ? "Edit User" : "Create New User"}
+              </h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
@@ -263,15 +477,16 @@ export default function ManageUsers() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-muted-foreground mb-1">Password</label>
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Password {editingUser && <span className="text-xs">(leave blank to keep current)</span>}
+                </label>
                 <input
                   type="password"
-                  required
-                  minLength={6}
+                  {...(editingUser ? {} : { required: true, minLength: 6 })}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
-                  placeholder="Min 6 characters"
+                  placeholder={editingUser ? "Enter new password to change" : "Min 6 characters"}
                 />
               </div>
               <div>
@@ -359,10 +574,53 @@ export default function ManageUsers() {
                   className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Create User
+                  {editingUser ? "Update User" : "Create User"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Delete User</h3>
+              <button
+                onClick={() => setDeletingUser(null)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                disabled={deleting}
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to <span className="text-red-400 font-medium">permanently delete</span>{" "}
+              <span className="text-white font-medium">{deletingUser.name}</span> ({deletingUser.email})?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeletingUser(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-muted-foreground hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Trash2 className="w-4 h-4" />
+                Permanently Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
