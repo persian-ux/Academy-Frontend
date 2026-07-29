@@ -9,7 +9,6 @@ import TeachersCarousel from "@/components/TeachersCarousel";
 import Footer from "@/components/Footer";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
-import Dashboard from "@/pages/Dashboard";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ManageUsers from "@/pages/admin/ManageUsers";
@@ -58,14 +57,6 @@ function App() {
               <PublicRoute>
                 <SignUp />
               </PublicRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
             }
           />
           <Route

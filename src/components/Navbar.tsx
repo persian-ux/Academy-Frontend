@@ -21,7 +21,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   // Check if we're on a dashboard or admin page
-  const isDashboardPage = location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/admin") || location.pathname.startsWith("/my-marks");
+  const isDashboardPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/my-marks");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -164,6 +164,55 @@ export default function Navbar() {
               </div>
             ) : (
               <>
+                {/* Nav Links */}
+                <a
+                  href="#about"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#about");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  About
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
+                  href="#achievements"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#achievements");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Achievements
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
+                  href="#teachers"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#teachers");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Teachers
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
+                  href="#footer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#footer");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Contact
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
                 <Link
                   to="/signin"
                   className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
@@ -235,6 +284,54 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <a
+                  href="#about"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#about");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  About
+                </a>
+                <a
+                  href="#achievements"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#achievements");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Achievements
+                </a>
+                <a
+                  href="#teachers"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#teachers");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Teachers
+                </a>
+                <a
+                  href="#footer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#footer");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Contact
+                </a>
                 <Link
                   to="/signin"
                   onClick={() => setIsOpen(false)}

@@ -71,11 +71,11 @@ export default function AdminLayout() {
 
         <div className="p-3 border-t border-white/10">
           <Link
-            to="/dashboard"
+            to="/admin"
             className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            {!collapsed && <span>Back to User Dashboard</span>}
+            {!collapsed && <span>Admin Panel</span>}
           </Link>
         </div>
       </aside>
