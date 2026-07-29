@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Loader2, Download } from "lucide-react";
 import { getReports, getCourses, type StudentReport, type CourseData } from "@/services/adminService";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 export default function Reports() {
   const [reports, setReports] = useState<StudentReport[]>([]);
@@ -80,16 +87,22 @@ export default function Reports() {
 
       <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
         <label className="block text-sm text-muted-foreground mb-1">Filter by Course</label>
-        <select
-          value={selectedCourse}
-          onChange={(e) => setSelectedCourse(Number(e.target.value))}
-          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+        <Select
+          value={String(selectedCourse)}
+          onValueChange={(value) => setSelectedCourse(Number(value))}
         >
-          <option value={0}>All Courses</option>
-          {courses.map((c) => (
-            <option key={c.courseId} value={c.courseId}>{c.title}</option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full max-w-md">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">All Courses</SelectItem>
+            {courses.map((c) => (
+              <SelectItem key={c.courseId} value={String(c.courseId)}>
+                {c.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (

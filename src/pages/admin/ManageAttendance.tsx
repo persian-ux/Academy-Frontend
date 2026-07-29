@@ -24,6 +24,13 @@ import {
 } from "@/services/adminService";
 import { userService } from "@/services/userService";
 import type { User, GradeLevel } from "@/types/user";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 type TabId = "mark" | "history" | "report";
 type AttendanceStatus = "Present" | "Absent" | "Late" | "Excused";
@@ -352,26 +359,27 @@ export default function ManageAttendance() {
                 <label className="block text-sm text-muted-foreground mb-1.5">
                   Student
                 </label>
-                <select
-                  value={markStudentId}
-                  onChange={(e) => {
-                    setMarkStudentId(Number(e.target.value));
+                <Select
+                  value={markStudentId ? String(markStudentId) : undefined}
+                  onValueChange={(value) => {
+                    setMarkStudentId(Number(value));
                     setMarkSuccess("");
                     setMarkError("");
                     setMarkErrors([]);
                   }}
                   disabled={!markGrade}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary disabled:opacity-50"
                 >
-                  <option value={0}>
-                    {markGrade ? `Select student from ${markGrade}` : "Select a grade first"}
-                  </option>
-                  {getStudentsByGrade(markGrade).map((s) => (
-                    <option key={s.user_id} value={s.user_id}>
-                      {s.name} ({s.email})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full disabled:opacity-50">
+                    <SelectValue placeholder={markGrade ? `Select student from ${markGrade}` : "Select a grade first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getStudentsByGrade(markGrade).map((s) => (
+                      <SelectItem key={s.user_id} value={String(s.user_id)}>
+                        {s.name} ({s.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {markGrade && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {getStudentsByGrade(markGrade).length} student(s) in {markGrade}
@@ -384,23 +392,26 @@ export default function ManageAttendance() {
                 <label className="block text-sm text-muted-foreground mb-1.5">
                   Course
                 </label>
-                <select
-                  value={markCourseId}
-                  onChange={(e) => {
-                    setMarkCourseId(Number(e.target.value));
+                <Select
+                  value={markCourseId ? String(markCourseId) : undefined}
+                  onValueChange={(value) => {
+                    setMarkCourseId(Number(value));
                     setMarkSuccess("");
                     setMarkError("");
                     setMarkErrors([]);
                   }}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                 >
-                  <option value={0}>Select a course</option>
-                  {courses.map((c) => (
-                    <option key={c.courseId} value={c.courseId}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((c) => (
+                      <SelectItem key={c.courseId} value={String(c.courseId)}>
+                        {c.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Date Picker */}
@@ -556,25 +567,26 @@ export default function ManageAttendance() {
                 <label className="block text-sm text-muted-foreground mb-1.5">
                   Select Student
                 </label>
-                <select
-                  value={historyStudentId}
-                  onChange={(e) => {
-                    setHistoryStudentId(Number(e.target.value));
+                <Select
+                  value={historyStudentId ? String(historyStudentId) : undefined}
+                  onValueChange={(value) => {
+                    setHistoryStudentId(Number(value));
                     setHistoryRecords([]);
                     setHistoryError("");
                   }}
                   disabled={!historyGrade}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary disabled:opacity-50"
                 >
-                  <option value={0}>
-                    {historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"}
-                  </option>
-                  {getStudentsByGrade(historyGrade).map((s) => (
-                    <option key={s.user_id} value={s.user_id}>
-                      {s.name} ({s.email})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full disabled:opacity-50">
+                    <SelectValue placeholder={historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getStudentsByGrade(historyGrade).map((s) => (
+                      <SelectItem key={s.user_id} value={String(s.user_id)}>
+                        {s.name} ({s.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <button
                 onClick={handleLoadHistory}
@@ -695,45 +707,50 @@ export default function ManageAttendance() {
                 <label className="block text-sm text-muted-foreground mb-1.5">
                   Student
                 </label>
-                <select
-                  value={reportStudentId}
-                  onChange={(e) => {
-                    setReportStudentId(Number(e.target.value));
+                <Select
+                  value={reportStudentId ? String(reportStudentId) : undefined}
+                  onValueChange={(value) => {
+                    setReportStudentId(Number(value));
                     setReportData(null);
                     setReportError("");
                   }}
                   disabled={!reportGrade}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary disabled:opacity-50"
                 >
-                  <option value={0}>
-                    {reportGrade ? `Choose student from ${reportGrade}` : "Select a grade first"}
-                  </option>
-                  {getStudentsByGrade(reportGrade).map((s) => (
-                    <option key={s.user_id} value={s.user_id}>
-                      {s.name} ({s.email})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full disabled:opacity-50">
+                    <SelectValue placeholder={reportGrade ? `Choose student from ${reportGrade}` : "Select a grade first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getStudentsByGrade(reportGrade).map((s) => (
+                      <SelectItem key={s.user_id} value={String(s.user_id)}>
+                        {s.name} ({s.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-sm text-muted-foreground mb-1.5">
                   Month
                 </label>
-                <select
-                  value={reportMonth}
-                  onChange={(e) => {
-                    setReportMonth(Number(e.target.value));
+                <Select
+                  value={String(reportMonth)}
+                  onValueChange={(value) => {
+                    setReportMonth(Number(value));
                     setReportData(null);
                     setReportError("");
                   }}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                 >
-                  {MONTH_NAMES.map((name, idx) => (
-                    <option key={idx + 1} value={idx + 1}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTH_NAMES.map((name, idx) => (
+                      <SelectItem key={idx + 1} value={String(idx + 1)}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-sm text-muted-foreground mb-1.5">

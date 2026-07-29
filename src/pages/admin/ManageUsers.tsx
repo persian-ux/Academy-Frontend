@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   X,
@@ -17,6 +17,21 @@ import { getAllUsers, createUser, updateUser, deleteUser, toggleUserStatus } fro
 import { getCourses, type CourseData } from "@/services/adminService";
 import type { User } from "@/services/userService";
 import type { GradeLevel } from "@/types/user";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const roleConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   Admin: {
@@ -59,10 +74,6 @@ export default function ManageUsers() {
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // 3-dot dropdown menu state
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
   // Delete confirmation state
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -96,21 +107,6 @@ export default function ManageUsers() {
     loadUsers();
   }, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null);
-      }
-    };
-    if (openMenuId !== null) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [openMenuId]);
-
   const loadCourses = async () => {
     try {
       const res = await getCourses();
@@ -129,7 +125,6 @@ export default function ManageUsers() {
   };
 
   const openEditModal = async (user: User) => {
-    setOpenMenuId(null);
     setEditingUser(user);
     setForm({
       name: user.name,
@@ -239,7 +234,6 @@ export default function ManageUsers() {
   };
 
   const handleToggleStatus = async (user: User) => {
-    setOpenMenuId(null);
     setTogglingId(user.user_id);
     try {
       const newStatus = !user.is_active;
@@ -369,62 +363,53 @@ export default function ManageUsers() {
                   </span>
                 </td>
                 <td className="p-4">
-                  <div className="flex items-center justify-end relative">
-                    <button
-                      onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
-                      className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
-                      title="More actions"
-                      disabled={togglingId === user.user_id}
-                    >
-                      {togglingId === user.user_id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <MoreVertical className="w-4 h-4" />
-                      )}
-                    </button>
-
-                    {/* 3-dot Dropdown Menu */}
-                    {openMenuId === user.user_id && (
-                      <div
-                        ref={menuRef}
-                        className="absolute right-0 top-full mt-1 z-50 w-48 bg-card border border-white/10 rounded-lg shadow-xl overflow-hidden"
-                      >
+                  <div className="flex items-center justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <button
-                          onClick={() => openEditModal(user)}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left"
+                          className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                          title="More actions"
+                          disabled={togglingId === user.user_id}
                         >
-                          <Pencil className="w-4 h-4 text-muted-foreground" />
-                          Edit User
+                          {togglingId === user.user_id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <MoreVertical className="w-4 h-4" />
+                          )}
                         </button>
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left"
-                        >
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuLabel className="text-muted-foreground font-normal">
+                          {user.name}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => openEditModal(user)}>
+                          <Pencil className="w-4 h-4 text-blue-400" />
+                          <span>Edit User</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
                           {user.is_active === false ? (
                             <>
                               <Power className="w-4 h-4 text-green-400" />
-                              Activate User
+                              <span>Activate User</span>
                             </>
                           ) : (
                             <>
                               <PowerOff className="w-4 h-4 text-yellow-400" />
-                              Deactivate User
+                              <span>Deactivate User</span>
                             </>
                           )}
-                        </button>
-                        <div className="border-t border-white/10" />
-                        <button
-                          onClick={() => {
-                            setOpenMenuId(null);
-                            setDeletingUser(user);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDeletingUser(user)}
+                          className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          Permanently Delete
-                        </button>
-                      </div>
-                    )}
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                          <span>Permanently Delete</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </td>
               </tr>
@@ -520,36 +505,41 @@ export default function ManageUsers() {
                 <>
                   <div>
                     <label className="block text-sm text-muted-foreground mb-1">Grade Level</label>
-                    <select
-                      value={form.grade_level}
-                      onChange={(e) => setForm({ ...form, grade_level: e.target.value as GradeLevel })}
-                      required
-                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                    <Select
+                      value={form.grade_level || undefined}
+                      onValueChange={(value) => setForm({ ...form, grade_level: value as GradeLevel })}
                     >
-                      <option value="">Select grade level</option>
-                      {GRADE_LEVELS.map((grade) => (
-                        <option key={grade} value={grade}>
-                          {grade} Grade
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select grade level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GRADE_LEVELS.map((grade) => (
+                          <SelectItem key={grade} value={grade}>
+                            {grade} Grade
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="block text-sm text-muted-foreground mb-1">Assign Course</label>
-                    <select
-                      value={form.courseId}
-                      onChange={(e) => setForm({ ...form, courseId: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                    <Select
+                      value={form.courseId ? String(form.courseId) : undefined}
+                      onValueChange={(value) => setForm({ ...form, courseId: Number(value) })}
                     >
-                      <option value={0}>Select a course (optional)</option>
-                      {courses
-                        .filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", "")))
-                        .map((c) => (
-                          <option key={c.courseId} value={c.courseId}>
-                            {c.title} {c.teacherName ? `- ${c.teacherName}` : ""}
-                          </option>
-                        ))}
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a course (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courses
+                          .filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", "")))
+                          .map((c) => (
+                            <SelectItem key={c.courseId} value={String(c.courseId)}>
+                              {c.title} {c.teacherName ? `- ${c.teacherName}` : ""}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-muted-foreground mt-1">
                       {courses.length > 0
                         ? `${courses.filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", ""))).length} course(s) available`

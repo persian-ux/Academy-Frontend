@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Loader2, Download, Calendar } from "lucide-react";
 import { getMonthlyReports, type StudentReport } from "@/services/adminService";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -89,24 +96,36 @@ export default function MonthlyReports() {
             <Calendar className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Month:</span>
           </div>
-          <select
+          <Select
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+            onValueChange={(value) => setSelectedMonth(value)}
           >
-            {MONTHS.map((name, idx) => (
-              <option key={idx} value={String(idx + 1).padStart(2, "0")}>{name}</option>
-            ))}
-          </select>
-          <select
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((name, idx) => (
+                <SelectItem key={idx} value={String(idx + 1).padStart(2, "0")}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
             value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+            onValueChange={(value) => setSelectedYear(value)}
           >
-            {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="text-sm text-muted-foreground ml-auto">
             {getMonthName(selectedMonth)} {selectedYear} Report
           </div>
