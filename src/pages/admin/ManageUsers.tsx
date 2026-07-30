@@ -531,18 +531,16 @@ export default function ManageUsers() {
                       <SelectValue placeholder="Select a section (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses
-                          .filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", "")))
-                          .map((c) => (
-                            <SelectItem key={c.courseId} value={String(c.courseId)}>
-                              {c.title} {c.teacherName ? `- ${c.teacherName}` : ""}
-                            </SelectItem>
-                          ))}
+                        {courses.map((c) => (
+                          <SelectItem key={c.courseId} value={String(c.courseId)}>
+                            {c.title} {c.teacherName ? `- ${c.teacherName}` : ""}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
                       {courses.length > 0
-                        ? `${courses.filter((c) => !form.grade_level || c.title.toLowerCase().includes(form.grade_level.toLowerCase().replace("th", ""))).length} section(s) available`
+                        ? `${courses.length} section(s) available`
                         : "No sections available. Create sections first."}
                     </p>
                   </div>
