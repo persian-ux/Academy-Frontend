@@ -15,7 +15,7 @@ export const getAllUsers = async (): Promise<{ success: boolean; message: string
 
 export const createUser = async (payload: CreateUserPayload): Promise<{ success: boolean; message: string; data?: UserType }> => {
   try {
-    const response = await api.post("/auth/register", payload);
+    const response = await api.post("/users", payload);
     return response.data;
   } catch (error: unknown) {
     const errMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || (error as Error)?.message || "Failed to create user";
@@ -45,7 +45,7 @@ export const deleteUser = async (userId: number): Promise<{ success: boolean; me
 
 export const toggleUserStatus = async (userId: number, isActive: boolean): Promise<{ success: boolean; message: string; data?: UserType }> => {
   try {
-    const response = await api.patch(`/users/${userId}/status`, { is_active: isActive });
+    const response = await api.patch(`/users/${userId}/status`, { isActive });
     return response.data;
   } catch (error: unknown) {
     const errMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || (error as Error)?.message || "Failed to update user status";

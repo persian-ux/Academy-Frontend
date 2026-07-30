@@ -123,11 +123,11 @@ export default function UploadMarks() {
   const handleBatchUpload = async () => {
     if (!selectedTestId) return;
     const marks = gradeStudents
-      .filter((s) => batchMarks[s.user_id]?.marks_obtained && batchMarks[s.user_id]?.total_marks)
+      .filter((s) => batchMarks[s.userId]?.marks_obtained && batchMarks[s.userId]?.total_marks)
       .map((s) => ({
-        student_id: s.user_id,
-        marks_obtained: Number(batchMarks[s.user_id].marks_obtained),
-        total_marks: Number(batchMarks[s.user_id].total_marks),
+        student_id: s.userId,
+        marks_obtained: Number(batchMarks[s.userId].marks_obtained),
+        total_marks: Number(batchMarks[s.userId].total_marks),
       }));
 
     if (marks.length === 0) {
@@ -287,7 +287,7 @@ export default function UploadMarks() {
                     </SelectTrigger>
                     <SelectContent>
                       {gradeStudents.map((s) => (
-                        <SelectItem key={s.user_id} value={String(s.user_id)}>
+                        <SelectItem key={s.userId} value={String(s.userId)}>
                           {s.name}
                         </SelectItem>
                       ))}
@@ -370,10 +370,10 @@ export default function UploadMarks() {
                     </thead>
                     <tbody>
                       {gradeStudents.map((student, idx) => {
-                        const existing = getExistingMark(student.user_id);
-                        const entry = batchMarks[student.user_id];
+                        const existing = getExistingMark(student.userId);
+                        const entry = batchMarks[student.userId];
                         return (
-                          <tr key={student.user_id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <tr key={student.userId} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                             <td className="p-3 text-muted-foreground text-sm">{idx + 1}</td>
                             <td className="p-3 text-white text-sm font-medium">{student.name}</td>
                             <td className="p-3 text-muted-foreground text-sm">{student.email.split("@")[0]}</td>
@@ -382,7 +382,7 @@ export default function UploadMarks() {
                                 type="number"
                                 min={0}
                                 value={entry?.marks_obtained ?? ""}
-                                onChange={(e) => updateBatchEntry(student.user_id, "marks_obtained", e.target.value)}
+                                onChange={(e) => updateBatchEntry(student.userId, "marks_obtained", e.target.value)}
                                 className="w-24 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary text-sm"
                                 placeholder={existing ? String(existing.marks_obtained) : "Marks"}
                               />
@@ -392,7 +392,7 @@ export default function UploadMarks() {
                                 type="number"
                                 min={1}
                                 value={entry?.total_marks ?? ""}
-                                onChange={(e) => updateBatchEntry(student.user_id, "total_marks", e.target.value)}
+                                onChange={(e) => updateBatchEntry(student.userId, "total_marks", e.target.value)}
                                 className="w-24 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary text-sm"
                                 placeholder={existing ? String(existing.total_marks) : "Total"}
                               />

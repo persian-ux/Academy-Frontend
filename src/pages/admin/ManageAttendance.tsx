@@ -187,7 +187,7 @@ export default function ManageAttendance() {
       });
 
       if (res.success) {
-        const student = allStudents.find((s) => s.user_id === markStudentId);
+        const student = allStudents.find((s) => s.userId === markStudentId);
         const studentName = student?.name || "Unknown";
         setMarkSuccess(
           `Attendance marked for ${studentName} (${markGrade}) on ${markDate} as ${markStatus}`
@@ -374,7 +374,7 @@ export default function ManageAttendance() {
                   </SelectTrigger>
                   <SelectContent>
                     {getStudentsByGrade(markGrade).map((s) => (
-                      <SelectItem key={s.user_id} value={String(s.user_id)}>
+                      <SelectItem key={s.userId} value={String(s.userId)}>
                         {s.name} ({s.email})
                       </SelectItem>
                     ))}
@@ -581,7 +581,7 @@ export default function ManageAttendance() {
                   </SelectTrigger>
                   <SelectContent>
                     {getStudentsByGrade(historyGrade).map((s) => (
-                      <SelectItem key={s.user_id} value={String(s.user_id)}>
+                      <SelectItem key={s.userId} value={String(s.userId)}>
                         {s.name} ({s.email})
                       </SelectItem>
                     ))}
@@ -721,7 +721,7 @@ export default function ManageAttendance() {
                   </SelectTrigger>
                   <SelectContent>
                     {getStudentsByGrade(reportGrade).map((s) => (
-                      <SelectItem key={s.user_id} value={String(s.user_id)}>
+                      <SelectItem key={s.userId} value={String(s.userId)}>
                         {s.name} ({s.email})
                       </SelectItem>
                     ))}

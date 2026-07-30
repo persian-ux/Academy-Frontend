@@ -170,7 +170,7 @@ export default function ManageUsers() {
           payload.password = form.password;
         }
 
-        const res = await updateUser(editingUser.user_id, payload);
+        const res = await updateUser(editingUser.userId, payload);
         if (res.success) {
           showToast("success", `User "${form.name}" updated successfully`);
           setShowModal(false);
@@ -218,7 +218,7 @@ export default function ManageUsers() {
     setDeleting(true);
     setFormError("");
     try {
-      const res = await deleteUser(deletingUser.user_id);
+      const res = await deleteUser(deletingUser.userId);
       if (res.success) {
         showToast("success", `User "${deletingUser.name}" deleted permanently`);
         setDeletingUser(null);
@@ -234,10 +234,10 @@ export default function ManageUsers() {
   };
 
   const handleToggleStatus = async (user: User) => {
-    setTogglingId(user.user_id);
+    setTogglingId(user.userId);
     try {
-      const newStatus = !user.is_active;
-      const res = await toggleUserStatus(user.user_id, newStatus);
+      const newStatus = !user.isActive;
+      const res = await toggleUserStatus(user.userId, newStatus);
       if (res.success) {
         showToast("success", `User "${user.name}" is now ${newStatus ? "active" : "inactive"}`);
         loadUsers();
@@ -328,7 +328,7 @@ export default function ManageUsers() {
           <tbody>
             {users.map((user) => (
               <tr
-                key={user.user_id}
+                key={user.userId}
                 className="border-b border-white/5 hover:bg-white/5 transition-colors"
               >
                 <td className="p-4 text-white text-sm font-medium">{user.name}</td>
@@ -349,17 +349,17 @@ export default function ManageUsers() {
                 <td className="p-4">
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
-                      user.is_active === false
+                      user.isActive === false
                         ? "bg-red-500/20 text-red-400 border-red-500/30"
                         : "bg-green-500/20 text-green-400 border-green-500/30"
                     }`}
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        user.is_active === false ? "bg-red-400" : "bg-green-400"
+                        user.isActive === false ? "bg-red-400" : "bg-green-400"
                       }`}
                     />
-                    {user.is_active === false ? "Inactive" : "Active"}
+                    {user.isActive === false ? "Inactive" : "Active"}
                   </span>
                 </td>
                 <td className="p-4">
@@ -369,9 +369,9 @@ export default function ManageUsers() {
                         <button
                           className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                           title="More actions"
-                          disabled={togglingId === user.user_id}
+                          disabled={togglingId === user.userId}
                         >
-                          {togglingId === user.user_id ? (
+                          {togglingId === user.userId ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <MoreVertical className="w-4 h-4" />
@@ -388,7 +388,7 @@ export default function ManageUsers() {
                           <span>Edit User</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                          {user.is_active === false ? (
+                          {user.isActive === false ? (
                             <>
                               <Power className="w-4 h-4 text-green-400" />
                               <span>Activate User</span>

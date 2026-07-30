@@ -10,6 +10,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: "Admin" | "Teacher" | "Student";
+  isActive: boolean;
 }
 
 export interface LoginResponse {

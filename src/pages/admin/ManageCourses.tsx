@@ -60,7 +60,7 @@ export default function ManageSections() {
 
   const openCreate = () => {
     setEditingCourse(null);
-    setForm({ title: "", description: "", teacherId: teachers[0]?.user_id || 0 });
+    setForm({ title: "", description: "", teacherId: teachers[0]?.userId || 0 });
     setShowModal(true);
     setError("");
   };
@@ -290,7 +290,7 @@ export default function ManageSections() {
                   </SelectTrigger>
                   <SelectContent>
                     {teachers.map((t) => (
-                      <SelectItem key={t.user_id} value={String(t.user_id)}>
+                      <SelectItem key={t.userId} value={String(t.userId)}>
                         {t.name} ({t.email})
                       </SelectItem>
                     ))}
