@@ -103,10 +103,6 @@ export default function ManageUsers() {
     }
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
   const loadCourses = async () => {
     try {
       const res = await getCourses();
@@ -115,6 +111,11 @@ export default function ManageUsers() {
       // silent
     }
   };
+
+  useEffect(() => {
+    loadUsers();
+    loadCourses();
+  }, []);
 
   const openCreateModal = async () => {
     setEditingUser(null);
@@ -132,7 +133,7 @@ export default function ManageUsers() {
       password: "",
       role: user.role === "Admin" ? "Teacher" : (user.role as "Teacher" | "Student"),
       grade_level: user.grade_level || "",
-      courseId: 0,
+      courseId: user.courseId || 0,
     });
     setFormError("");
     await loadCourses();
@@ -152,6 +153,7 @@ export default function ManageUsers() {
           email: string;
           role: "Teacher" | "Student";
           grade_level?: GradeLevel | null;
+          courseId?: number | null;
           password?: string;
         } = {
           name: form.name,
@@ -161,8 +163,10 @@ export default function ManageUsers() {
 
         if (form.role === "Student") {
           payload.grade_level = form.grade_level || null;
+          payload.courseId = form.courseId || null;
         } else {
           payload.grade_level = null;
+          payload.courseId = null;
         }
 
         // Only send password if user entered a new one
@@ -186,6 +190,7 @@ export default function ManageUsers() {
           password: string;
           role: "Teacher" | "Student";
           grade_level?: GradeLevel | null;
+          courseId?: number | null;
         } = {
           name: form.name,
           email: form.email,
@@ -195,6 +200,7 @@ export default function ManageUsers() {
 
         if (form.role === "Student") {
           payload.grade_level = form.grade_level || null;
+          payload.courseId = form.courseId || null;
         }
 
         const res = await createUser(payload);
@@ -320,7 +326,7 @@ export default function ManageUsers() {
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Name</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Email</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Role</th>
-              <th className="text-left p-4 text-muted-foreground font-medium text-sm">Grade Level</th>
+              <th className="text-left p-4 text-muted-foreground font-medium text-sm">Class & Section</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Status</th>
               <th className="text-right p-4 text-muted-foreground font-medium text-sm">Actions</th>
             </tr>
@@ -343,8 +349,21 @@ export default function ManageUsers() {
                     {roleConfig[user.role]?.label || user.role}
                   </span>
                 </td>
-                <td className="p-4 text-muted-foreground text-sm">
-                  {user.grade_level || "—"}
+                <td className="p-4 text-sm">
+                  {user.role === "Student" ? (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-white font-medium">
+                        {user.grade_level || "—"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {user.section ||
+                          courses.find((c) => c.courseId === user.courseId)?.title ||
+                          "No section"}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
                 <td className="p-4">
                   <span

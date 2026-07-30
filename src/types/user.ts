@@ -7,6 +7,8 @@ export interface User {
   email: string;
   role: Role;
   grade_level: GradeLevel | null;
+  section?: string | null;
+  courseId?: number | null;
   createdAt: string | null;
   isActive: boolean;
 }
@@ -17,6 +19,7 @@ export interface CreateUserPayload {
   password: string;
   role: "Teacher" | "Student";
   grade_level?: GradeLevel | null;
+  courseId?: number | null;
 }
 
 export interface UpdateUserPayload {
@@ -25,6 +28,7 @@ export interface UpdateUserPayload {
   password?: string;
   role?: "Teacher" | "Student";
   grade_level?: GradeLevel | null;
+  courseId?: number | null;
 }
 
 export interface ApiResponse<T = unknown> {
