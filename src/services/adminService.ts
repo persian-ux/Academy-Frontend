@@ -131,6 +131,44 @@ export const markAttendance = async (data: {
   }
 };
 
+export const markBulkAttendance = async (data: {
+  records: Array<{
+    student_id: number;
+    course_id: number;
+    date: string;
+    status: "Present" | "Absent" | "Late" | "Excused";
+  }>;
+}): Promise<{ success: boolean; message: string; errors?: string[] }> => {
+  try {
+    const response = await api.post("/attendance/bulk", data);
+    return response.data;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      return axiosError.response.data;
+    }
+    // Fallback: try individual attendance marking
+    try {
+      const results = await Promise.all(
+        data.records.map((record) => markAttendance(record))
+      );
+      const allSuccess = results.every((r) => r.success);
+      const errors = results
+        .filter((r) => !r.success)
+        .map((r) => r.message);
+      return {
+        success: allSuccess,
+        message: allSuccess
+          ? "All attendance records saved successfully"
+          : "Some attendance records failed to save",
+        errors: errors.length > 0 ? errors : undefined,
+      };
+    } catch {
+      return { success: false, message: "Bulk attendance endpoint not available" };
+    }
+  }
+};
+
 export const getAttendanceHistory = async (
   studentId: number
 ): Promise<{ success: boolean; message: string; data?: AttendanceRecord[] }> => {

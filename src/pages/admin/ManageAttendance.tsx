@@ -12,6 +12,7 @@ import {
   BookOpen,
   Filter,
   GraduationCap,
+  Users,
 } from "lucide-react";
 import {
   markAttendance,
@@ -119,6 +120,7 @@ export default function ManageAttendance() {
 
   // Tab 2 - Attendance History
   const [historyGrade, setHistoryGrade] = useState<GradeLevel | "">("");
+  const [historySection, setHistorySection] = useState<string>("");
   const [historyStudentId, setHistoryStudentId] = useState<number>(0);
   const [historyRecords, setHistoryRecords] = useState<AttendanceRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -127,6 +129,7 @@ export default function ManageAttendance() {
 
   // Tab 3 - Monthly Report
   const [reportGrade, setReportGrade] = useState<GradeLevel | "">("");
+  const [reportSection, setReportSection] = useState<string>("");
   const [reportStudentId, setReportStudentId] = useState<number>(0);
   const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
@@ -138,6 +141,24 @@ export default function ManageAttendance() {
   const getStudentsByGrade = (grade: GradeLevel | "") => {
     if (!grade) return [];
     return allStudents.filter((s) => s.grade_level === grade);
+  };
+
+  // Get unique sections from students in the selected grade
+  const getSectionsByGrade = (grade: GradeLevel | ""): string[] => {
+    if (!grade) return [];
+    const students = getStudentsByGrade(grade);
+    const sections = new Set<string>();
+    students.forEach((s) => {
+      if (s.section) sections.add(s.section);
+    });
+    return Array.from(sections).sort();
+  };
+
+  // Get filtered students based on grade and section
+  const getFilteredStudentsByGradeAndSection = (grade: GradeLevel | "", section: string): User[] => {
+    const gradeStudents = getStudentsByGrade(grade);
+    if (!section) return gradeStudents;
+    return gradeStudents.filter((s) => s.section === section);
   };
 
   // Load initial data
@@ -506,7 +527,7 @@ export default function ManageAttendance() {
 
           {markErrors.length > 0 && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-        <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3">
                 <div className="p-1 rounded-full bg-red-500/20">
                   <AlertCircle className="w-4 h-4 text-red-400" />
                 </div>
@@ -546,6 +567,7 @@ export default function ManageAttendance() {
                     key={grade}
                     onClick={() => {
                       setHistoryGrade(grade);
+                      setHistorySection("");
                       setHistoryStudentId(0);
                       setHistoryRecords([]);
                       setHistoryError("");
@@ -562,45 +584,90 @@ export default function ManageAttendance() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-end gap-4 mb-4">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Select Student
-                </label>
-                <Select
-                  value={historyStudentId ? String(historyStudentId) : undefined}
-                  onValueChange={(value) => {
-                    setHistoryStudentId(Number(value));
-                    setHistoryRecords([]);
-                    setHistoryError("");
-                  }}
-                  disabled={!historyGrade}
+            {historyGrade && (
+              <div className="flex flex-wrap items-end gap-4 mb-4">
+                {/* Section Filter */}
+                <div className="w-full md:w-48">
+                  <label className="block text-sm text-muted-foreground mb-1.5">
+                    <Filter className="w-3.5 h-3.5 inline mr-1" />
+                    Filter by Section
+                  </label>
+                  <Select
+                    value={historySection}
+                    onValueChange={(value) => {
+                      setHistorySection(value);
+                      setHistoryStudentId(0);
+                      setHistoryRecords([]);
+                      setHistoryError("");
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Sections" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Sections</SelectItem>
+                      {getSectionsByGrade(historyGrade).map((section) => (
+                        <SelectItem key={section} value={section}>
+                          {section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Student Select */}
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm text-muted-foreground mb-1.5">
+                    <Users className="w-3.5 h-3.5 inline mr-1" />
+                    Select Student
+                  </label>
+                  <Select
+                    value={historyStudentId ? String(historyStudentId) : undefined}
+                    onValueChange={(value) => {
+                      setHistoryStudentId(Number(value));
+                      setHistoryRecords([]);
+                      setHistoryError("");
+                    }}
+                    disabled={!historyGrade}
+                  >
+                    <SelectTrigger className="w-full disabled:opacity-50">
+                      <SelectValue placeholder={historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getFilteredStudentsByGradeAndSection(historyGrade, historySection).length > 0 ? (
+                        getFilteredStudentsByGradeAndSection(historyGrade, historySection).map((s) => (
+                          <SelectItem key={s.userId} value={String(s.userId)}>
+                            {s.name} ({s.email})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No students found
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {historyGrade && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {getFilteredStudentsByGradeAndSection(historyGrade, historySection).length} student(s)
+                      {historySection ? ` in ${historySection}` : ` in ${historyGrade}`}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleLoadHistory}
+                  disabled={historyLoading || !historyStudentId}
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <SelectTrigger className="w-full disabled:opacity-50">
-                    <SelectValue placeholder={historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getStudentsByGrade(historyGrade).map((s) => (
-                      <SelectItem key={s.userId} value={String(s.userId)}>
-                        {s.name} ({s.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {historyLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Filter className="w-4 h-4" />
+                  )}
+                  Load History
+                </button>
               </div>
-              <button
-                onClick={handleLoadHistory}
-                disabled={historyLoading || !historyStudentId}
-                className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {historyLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Filter className="w-4 h-4" />
-                )}
-                Load History
-              </button>
-            </div>
+            )}
 
             {historyError && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
@@ -686,6 +753,7 @@ export default function ManageAttendance() {
                     key={grade}
                     onClick={() => {
                       setReportGrade(grade);
+                      setReportSection("");
                       setReportStudentId(0);
                       setReportData(null);
                       setReportError("");
@@ -702,88 +770,134 @@ export default function ManageAttendance() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Student
-                </label>
-                <Select
-                  value={reportStudentId ? String(reportStudentId) : undefined}
-                  onValueChange={(value) => {
-                    setReportStudentId(Number(value));
-                    setReportData(null);
-                    setReportError("");
-                  }}
-                  disabled={!reportGrade}
-                >
-                  <SelectTrigger className="w-full disabled:opacity-50">
-                    <SelectValue placeholder={reportGrade ? `Choose student from ${reportGrade}` : "Select a grade first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getStudentsByGrade(reportGrade).map((s) => (
-                      <SelectItem key={s.userId} value={String(s.userId)}>
-                        {s.name} ({s.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Month
-                </label>
-                <Select
-                  value={String(reportMonth)}
-                  onValueChange={(value) => {
-                    setReportMonth(Number(value));
-                    setReportData(null);
-                    setReportError("");
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTH_NAMES.map((name, idx) => (
-                      <SelectItem key={idx + 1} value={String(idx + 1)}>
-                        {name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Year
-                </label>
-                <input
-                  type="number"
-                  min={2000}
-                  max={2100}
-                  value={reportYear}
-                  onChange={(e) => {
-                    setReportYear(Number(e.target.value));
-                    setReportData(null);
-                    setReportError("");
-                  }}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={handleLoadReport}
-                  disabled={reportLoading || !reportStudentId}
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 w-full justify-center"
-                >
-                  {reportLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <BarChart3 className="w-4 h-4" />
+            {reportGrade && (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                {/* Section Filter */}
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1.5">
+                    <Filter className="w-3.5 h-3.5 inline mr-1" />
+                    Section
+                  </label>
+                  <Select
+                    value={reportSection}
+                    onValueChange={(value) => {
+                      setReportSection(value);
+                      setReportStudentId(0);
+                      setReportData(null);
+                      setReportError("");
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Sections" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Sections</SelectItem>
+                      {getSectionsByGrade(reportGrade).map((section) => (
+                        <SelectItem key={section} value={section}>
+                          {section}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Student Select */}
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1.5">
+                    <Users className="w-3.5 h-3.5 inline mr-1" />
+                    Student
+                  </label>
+                  <Select
+                    value={reportStudentId ? String(reportStudentId) : undefined}
+                    onValueChange={(value) => {
+                      setReportStudentId(Number(value));
+                      setReportData(null);
+                      setReportError("");
+                    }}
+                    disabled={!reportGrade}
+                  >
+                    <SelectTrigger className="w-full disabled:opacity-50">
+                      <SelectValue placeholder={reportGrade ? `Choose student from ${reportGrade}` : "Select a grade first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getFilteredStudentsByGradeAndSection(reportGrade, reportSection).length > 0 ? (
+                        getFilteredStudentsByGradeAndSection(reportGrade, reportSection).map((s) => (
+                          <SelectItem key={s.userId} value={String(s.userId)}>
+                            {s.name} ({s.email})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No students found
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {reportGrade && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {getFilteredStudentsByGradeAndSection(reportGrade, reportSection).length} student(s)
+                      {reportSection ? ` in ${reportSection}` : ` in ${reportGrade}`}
+                    </p>
                   )}
-                  Generate Report
-                </button>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1.5">
+                    Month
+                  </label>
+                  <Select
+                    value={String(reportMonth)}
+                    onValueChange={(value) => {
+                      setReportMonth(Number(value));
+                      setReportData(null);
+                      setReportError("");
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTH_NAMES.map((name, idx) => (
+                        <SelectItem key={idx + 1} value={String(idx + 1)}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1.5">
+                    Year
+                  </label>
+                  <input
+                    type="number"
+                    min={2000}
+                    max={2100}
+                    value={reportYear}
+                    onChange={(e) => {
+                      setReportYear(Number(e.target.value));
+                      setReportData(null);
+                      setReportError("");
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={handleLoadReport}
+                    disabled={reportLoading || !reportStudentId}
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 w-full justify-center"
+                  >
+                    {reportLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <BarChart3 className="w-4 h-4" />
+                    )}
+                    Generate Report
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {reportError && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
@@ -850,8 +964,8 @@ export default function ManageAttendance() {
                         </th>
                         <th className="text-left p-4 text-muted-foreground font-medium text-sm">
                           <div className="flex items-center gap-1">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        Section
+                            <BookOpen className="w-3.5 h-3.5" />
+                            Section
                           </div>
                         </th>
                         <th className="text-center p-4 text-muted-foreground font-medium text-sm">
