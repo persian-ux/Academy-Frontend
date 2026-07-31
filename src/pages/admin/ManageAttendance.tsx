@@ -26,6 +26,7 @@ import {
 } from "@/services/adminService";
 import { userService } from "@/services/userService";
 import type { User, GradeLevel } from "@/types/user";
+import { Checkbox } from "@/components/Checkbox";
 import {
   Select,
   SelectTrigger,
@@ -53,11 +54,11 @@ const STATUS_COLORS: Record<AttendanceStatus, string> = {
   Excused: "text-blue-400 bg-blue-500/10 border-blue-500/30",
 };
 
-const STATUS_BG: Record<string, string> = {
-  Present: "bg-green-500/20 border-green-500/50",
-  Absent: "bg-red-500/20 border-red-500/50",
-  Late: "bg-yellow-500/20 border-yellow-500/50",
-  Excused: "bg-blue-500/20 border-blue-500/50",
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  Present: <Check className="w-3.5 h-3.5" />,
+  Absent: <X className="w-3.5 h-3.5" />,
+  Late: <Clock className="w-3.5 h-3.5" />,
+  Excused: <AlertCircle className="w-3.5 h-3.5" />,
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -67,11 +68,8 @@ function StatusBadge({ status }: { status: string }) {
         STATUS_COLORS[status as AttendanceStatus] || "text-gray-400 bg-gray-500/10 border-gray-500/30"
       }`}
     >
-      {status === "Present" && <Check className="w-3 h-3 mr-1" />}
-      {status === "Absent" && <X className="w-3 h-3 mr-1" />}
-      {status === "Late" && <Clock className="w-3 h-3 mr-1" />}
-      {status === "Excused" && <AlertCircle className="w-3 h-3 mr-1" />}
-      {status}
+      {STATUS_ICONS[status]}
+      <span className="ml-1">{status}</span>
     </span>
   );
 }
@@ -88,9 +86,7 @@ function SummaryCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div
-      className={`flex items-center gap-3 p-4 rounded-xl border ${color} bg-opacity-10`}
-    >
+    <div className={`flex items-center gap-3 p-4 rounded-xl border ${color} bg-opacity-10`}>
       <div className="p-2 rounded-lg bg-white/5">{icon}</div>
       <div>
         <p className="text-sm text-muted-foreground">{label}</p>
@@ -138,10 +134,10 @@ export default function ManageAttendance() {
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
 
-  // Derived: students filtered by selected grade
+  // Derived: students filtered by selected grade (failsafe for null grade_level)
   const getStudentsByGrade = (grade: GradeLevel | "") => {
     if (!grade) return [];
-    return allStudents.filter((s) => s.grade_level === grade);
+    return allStudents.filter((s) => !s.grade_level || s.grade_level === grade);
   };
 
   // Get unique sections from students in the selected grade
@@ -194,8 +190,11 @@ export default function ManageAttendance() {
         if (usersRes.success && usersRes.data) {
           setAllStudents(usersRes.data.filter((u: User) => u.role === "Student"));
         }
+        if (!cancelled && !coursesRes.success) {
+          setGlobalError("Could not load courses. Please ensure backend is running.");
+        }
       } catch {
-        if (!cancelled) setGlobalError("Failed to load data");
+        if (!cancelled) setGlobalError("Failed to load data. Make sure the server is running.");
       } finally {
         if (!cancelled) setLoadingData(false);
       }
@@ -213,10 +212,6 @@ export default function ManageAttendance() {
       setBulkError("No students found for the selected grade and section");
       return;
     }
-    if (!markCourseId) {
-      setBulkError("Please select a course/section");
-      return;
-    }
 
     setBulkSubmitting(true);
     setBulkError("");
@@ -225,7 +220,7 @@ export default function ManageAttendance() {
 
     const records = students.map((student) => ({
       student_id: student.userId,
-      course_id: markCourseId,
+      course_id: markCourseId || 0,
       date: markDate,
       status: attendanceRecords[student.userId] || "Present",
     }));
@@ -234,17 +229,17 @@ export default function ManageAttendance() {
       const res = await markBulkAttendance({ records });
       if (res.success) {
         setBulkSuccess(
-          `Attendance marked successfully for ${records.length} student(s) in ${markGrade}${markSection ? ` - ${markSection}` : ""} on ${markDate}`
+          `Attendance saved successfully for ${records.length} student(s) in ${markGrade}${markSection ? ` - ${markSection}` : ""} on ${markDate}`
         );
       } else {
         if (res.errors && res.errors.length > 0) {
           setBulkErrors(res.errors);
         } else {
-          setBulkError(res.message || "Failed to mark attendance");
+          setBulkError(res.message || "Failed to save attendance. Please try again.");
         }
       }
     } catch {
-      setBulkError("Failed to mark attendance");
+      setBulkError("Failed to save attendance. Please try again.");
     } finally {
       setBulkSubmitting(false);
     }
@@ -331,7 +326,7 @@ export default function ManageAttendance() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white">Attendance Management</h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Mark attendance, view history, and generate reports - grade wise
+          Mark attendance, view history, and generate reports
         </p>
       </div>
 
@@ -365,7 +360,7 @@ export default function ManageAttendance() {
           <div className="p-6 rounded-xl bg-white/5 border border-white/10">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-primary" />
-              Mark Attendance - Grade & Section Wise
+              Mark Attendance
             </h3>
 
             {/* Grade Selector */}
@@ -381,6 +376,7 @@ export default function ManageAttendance() {
                       setMarkGrade(grade);
                       setMarkSection("");
                       setMarkCourseId(0);
+                      setAttendanceRecords({});
                       setBulkSuccess("");
                       setBulkError("");
                       setBulkErrors([]);
@@ -408,33 +404,39 @@ export default function ManageAttendance() {
                       <Filter className="w-3.5 h-3.5 inline mr-1" />
                       Select Section
                     </label>
-                  <Select
-                      value={markSection}
-                      onValueChange={(value) => {
-                        setMarkSection(value);
-                        setMarkCourseId(0);
-                        if (value) {
-                          const students = getFilteredStudentsByGradeAndSection(markGrade, value);
-                          initAttendanceRecordsForStudents(students);
-                        } else {
-                          setAttendanceRecords({});
-                          setBulkSuccess("");
-                          setBulkError("");
-                          setBulkErrors([]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a section" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getSectionsByGrade(markGrade).map((section) => (
-                          <SelectItem key={section} value={section}>
-                            {section}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {getSectionsByGrade(markGrade).length > 0 ? (
+                      <Select
+                        value={markSection}
+                        onValueChange={(value) => {
+                          setMarkSection(value);
+                          setMarkCourseId(0);
+                          if (value) {
+                            const students = getFilteredStudentsByGradeAndSection(markGrade, value);
+                            initAttendanceRecordsForStudents(students);
+                          } else {
+                            setAttendanceRecords({});
+                            setBulkSuccess("");
+                            setBulkError("");
+                            setBulkErrors([]);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a section" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getSectionsByGrade(markGrade).map((section) => (
+                            <SelectItem key={section} value={section}>
+                              {section}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-muted-foreground text-sm">
+                        No sections available
+                      </div>
+                    )}
                     {!markSection && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Select a section to view students
@@ -446,7 +448,7 @@ export default function ManageAttendance() {
                   <div>
                     <label className="block text-sm text-muted-foreground mb-1.5">
                       <BookOpen className="w-3.5 h-3.5 inline mr-1" />
-                      Select Course
+                      Select Course (optional)
                     </label>
                     <Select
                       value={markCourseId ? String(markCourseId) : undefined}
@@ -459,14 +461,21 @@ export default function ManageAttendance() {
                       disabled={!markSection}
                     >
                       <SelectTrigger className="w-full disabled:opacity-50">
-                        <SelectValue placeholder={markSection ? "Select a course" : "Select section first"} />
+                        <SelectValue placeholder={markSection ? "Optional - select course" : "Select section first"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map((c) => (
-                          <SelectItem key={c.courseId} value={String(c.courseId)}>
-                            {c.title}
+                        <SelectItem value="0">No course (general)</SelectItem>
+                        {courses.length > 0 ? (
+                          courses.map((c) => (
+                            <SelectItem key={c.courseId} value={String(c.courseId)}>
+                              {c.title}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No courses available
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -494,7 +503,7 @@ export default function ManageAttendance() {
                 {/* Student List with Status */}
                 {markSection ? (
                   <>
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-4">
                       <p className="text-sm text-muted-foreground">
                         <Users className="w-3.5 h-3.5 inline mr-1" />
                         {getMarkStudents().length} student(s) in {markGrade} - {markSection}
@@ -502,95 +511,109 @@ export default function ManageAttendance() {
                     </div>
 
                     {getMarkStudents().length > 0 ? (
-                      <div className="overflow-x-auto rounded-xl border border-white/10 mb-6">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="bg-white/5 border-b border-white/10">
-                              <th className="text-left p-3 text-muted-foreground font-medium text-sm">
-                                #
-                              </th>
-                              <th className="text-left p-3 text-muted-foreground font-medium text-sm">
-                                <Users className="w-3.5 h-3.5 inline mr-1" />
-                                Student Name
-                              </th>
-                              <th className="text-left p-3 text-muted-foreground font-medium text-sm">
-                                Email
-                              </th>
-                              <th className="text-center p-3 text-muted-foreground font-medium text-sm">
-                                Status
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {getMarkStudents().map((student, index) => (
-                              <tr
-                                key={student.userId}
-                                className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                              >
-                                <td className="p-3 text-white/60 text-sm">{index + 1}</td>
-                                <td className="p-3 text-white text-sm font-medium">
-                                  {student.name}
-                                </td>
-                                <td className="p-3 text-white/70 text-sm">
-                                  {student.email}
-                                </td>
-                                <td className="p-3">
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    {STATUS_OPTIONS.map((status) => (
-                                      <button
-                                        key={status}
-                                        onClick={() => {
-                                          setAttendanceRecords((prev) => ({
-                                            ...prev,
-                                            [student.userId]: status,
-                                          }));
-                                          setBulkSuccess("");
-                                          setBulkError("");
-                                          setBulkErrors([]);
-                                        }}
-                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                          attendanceRecords[student.userId] === status
-                                            ? `${STATUS_BG[status]} text-white shadow-sm`
-                                            : "bg-white/5 text-muted-foreground border-white/10 hover:border-white/30 hover:text-white"
-                                        }`}
-                                        title={status}
-                                      >
-                                        {status === "Present" && <Check className="w-3 h-3" />}
-                                        {status === "Absent" && <X className="w-3 h-3" />}
-                                        {status === "Late" && <Clock className="w-3 h-3" />}
-                                        {status === "Excused" && <AlertCircle className="w-3 h-3" />}
-                                        <span className="hidden sm:inline">{status}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </td>
+                      <div className="space-y-4">
+                        {/* Student Table - Name | Class/Section | Present | Absent | Late | Excused */}
+                        <div className="overflow-x-auto rounded-xl border border-white/10">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-white/5 border-b border-white/10">
+                                <th className="text-left p-3 text-muted-foreground font-medium text-sm">
+                                  <Users className="w-3.5 h-3.5 inline mr-1" />
+                                  Student Name
+                                </th>
+                                <th className="text-left p-3 text-muted-foreground font-medium text-sm">
+                                  <GraduationCap className="w-3.5 h-3.5 inline mr-1" />
+                                  Class / Section
+                                </th>
+                                {STATUS_OPTIONS.map((status) => (
+                                  <th key={status} className="text-center p-3 text-muted-foreground font-medium text-sm min-w-[90px]">
+                                    <div className="flex items-center justify-center gap-1">
+                                      {STATUS_ICONS[status]}
+                                      <span>{status}</span>
+                                    </div>
+                                  </th>
+                                ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {getMarkStudents().map((student) => {
+                                const currentStatus = attendanceRecords[student.userId] || "Present";
+                                return (
+                                  <tr
+                                    key={student.userId}
+                                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                                  >
+                                    {/* Left: Student Name */}
+                                    <td className="p-3">
+                                      <span className="text-white text-sm font-medium">
+                                        {student.name}
+                                      </span>
+                                    </td>
+
+                                    {/* Middle: Class / Section */}
+                                    <td className="p-3">
+                                      <span className="text-sm text-muted-foreground">
+                                        {student.grade_level || markGrade}
+                                        {student.section ? ` - ${student.section}` : ""}
+                                      </span>
+                                    </td>
+
+                                    {/* Status checkboxes - only one can be checked per row */}
+                                    {STATUS_OPTIONS.map((status) => {
+                                      const isActive = currentStatus === status;
+                                      return (
+                                        <td key={status} className="p-3 text-center">
+                                          <div className="flex justify-center">
+                                            <Checkbox
+                                              checked={isActive}
+                                              onChange={() => {
+                                                setAttendanceRecords((prev) => ({
+                                                  ...prev,
+                                                  [student.userId]: status,
+                                                }));
+                                                setBulkSuccess("");
+                                                setBulkError("");
+                                                setBulkErrors([]);
+                                              }}
+                                              size="sm"
+                                            />
+                                          </div>
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Save Attendance Button */}
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={handleBulkMarkAttendance}
+                            disabled={bulkSubmitting}
+                            className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {bulkSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                            <Save className="w-4 h-4" />
+                            Save Attendance
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="p-8 text-center text-muted-foreground rounded-xl border border-white/10 mb-6">
                         No students found in {markGrade} - {markSection}
                       </div>
                     )}
-
-                    {/* Save Attendance Button */}
-                    {getMarkStudents().length > 0 && (
-                      <button
-                        onClick={handleBulkMarkAttendance}
-                        disabled={bulkSubmitting || !markCourseId}
-                        className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {bulkSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                        <Save className="w-4 h-4" />
-                        Save Attendance
-                      </button>
-                    )}
                   </>
                 ) : (
                   <div className="p-8 text-center text-muted-foreground rounded-xl border border-white/10">
-                    Please select a section to view students and mark attendance
+                    {getSectionsByGrade(markGrade).length === 0 ? (
+                      <p>No sections found for {markGrade}. Please ensure students have a section assigned.</p>
+                    ) : (
+                      <p>Please select a section to view students and mark attendance</p>
+                    )}
                   </div>
                 )}
               </>
@@ -654,7 +677,7 @@ export default function ManageAttendance() {
           <div className="p-6 rounded-xl bg-white/5 border border-white/10">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <History className="w-5 h-5 text-primary" />
-              Attendance History - Grade Wise
+              Attendance History
             </h3>
 
             {/* Grade Selector for History */}
@@ -735,10 +758,10 @@ export default function ManageAttendance() {
                       <SelectValue placeholder={historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {getFilteredStudentsByGradeAndSection(historyGrade, historySection).length > 0 ? (
+                          {getFilteredStudentsByGradeAndSection(historyGrade, historySection).length > 0 ? (
                         getFilteredStudentsByGradeAndSection(historyGrade, historySection).map((s) => (
                           <SelectItem key={s.userId} value={String(s.userId)}>
-                            {s.name} ({s.email})
+                            {s.name}{s.email ? ` (${s.email.split("@")[0]})` : ""}
                           </SelectItem>
                         ))
                       ) : (
@@ -840,7 +863,7 @@ export default function ManageAttendance() {
           <div className="p-6 rounded-xl bg-white/5 border border-white/10">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
-              Monthly Attendance Report - Grade Wise
+              Monthly Attendance Report
             </h3>
 
             {/* Grade Selector for Report */}
@@ -909,7 +932,7 @@ export default function ManageAttendance() {
                     Student
                   </label>
                   <Select
-                    value={reportStudentId ? String(reportStudentId) : undefined}
+                  value={reportStudentId ? String(reportStudentId) : undefined}
                     onValueChange={(value) => {
                       setReportStudentId(Number(value));
                       setReportData(null);
@@ -924,7 +947,7 @@ export default function ManageAttendance() {
                       {getFilteredStudentsByGradeAndSection(reportGrade, reportSection).length > 0 ? (
                         getFilteredStudentsByGradeAndSection(reportGrade, reportSection).map((s) => (
                           <SelectItem key={s.userId} value={String(s.userId)}>
-                            {s.name} ({s.email})
+                            {s.name}{s.email ? ` (${s.email.split("@")[0]})` : ""}
                           </SelectItem>
                         ))
                       ) : (

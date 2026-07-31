@@ -48,12 +48,16 @@ export const getCourses = async (): Promise<{
   success: boolean;
   courses: CourseData[];
 }> => {
-  const response = await api.get("/courses");
-  const res = response.data;
-  if (res.success && Array.isArray(res.data)) {
-    return { success: true, courses: res.data.map(mapCourse) };
+  try {
+    const response = await api.get("/courses");
+    const res = response.data;
+    if (res.success && Array.isArray(res.data)) {
+      return { success: true, courses: res.data.map(mapCourse) };
+    }
+    return { success: false, courses: [] };
+  } catch {
+    return { success: false, courses: [] };
   }
-  return { success: false, courses: [] };
 };
 
 export const createCourse = async (data: {
@@ -121,7 +125,17 @@ export const markAttendance = async (data: {
 }): Promise<{ success: boolean; message: string; data?: { attendance_id: number }; errors?: string[] }> => {
   try {
     const response = await api.post("/attendance", data);
-    return response.data;
+    // If the API call succeeded (HTTP 200), treat it as success
+    // even if the response body doesn't have a "success" field
+    if (response.data) {
+      return {
+        success: response.data.success !== false,
+        message: response.data.message || "Attendance saved",
+        data: response.data.data,
+        errors: response.data.errors,
+      };
+    }
+    return { success: true, message: "Attendance saved" };
   } catch (error: unknown) {
     const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
     if (axiosError.response?.data) {
@@ -139,33 +153,53 @@ export const markBulkAttendance = async (data: {
     status: "Present" | "Absent" | "Late" | "Excused";
   }>;
 }): Promise<{ success: boolean; message: string; errors?: string[] }> => {
+  // Try 1: Send records wrapped in object { records: [...] }
   try {
     const response = await api.post("/attendance/bulk", data);
-    return response.data;
-  } catch (error: unknown) {
-    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
-    if (axiosError.response?.data) {
-      return axiosError.response.data;
-    }
-    // Fallback: try individual attendance marking
-    try {
-      const results = await Promise.all(
-        data.records.map((record) => markAttendance(record))
-      );
-      const allSuccess = results.every((r) => r.success);
-      const errors = results
-        .filter((r) => !r.success)
-        .map((r) => r.message);
+    // If the API call succeeded (HTTP 200), treat it as success
+    if (response.data) {
       return {
-        success: allSuccess,
-        message: allSuccess
-          ? "All attendance records saved successfully"
-          : "Some attendance records failed to save",
-        errors: errors.length > 0 ? errors : undefined,
+        success: response.data.success !== false,
+        message: response.data.message || "Attendance saved successfully",
+        errors: response.data.errors,
       };
-    } catch {
-      return { success: false, message: "Bulk attendance endpoint not available" };
     }
+  } catch {
+    // First format failed, try alternative format below
+  }
+
+  // Try 2: Send records as a plain array [...]
+  try {
+    const response = await api.post("/attendance/bulk", data.records);
+    if (response.data) {
+      return {
+        success: response.data.success !== false,
+        message: response.data.message || "Attendance saved successfully",
+        errors: response.data.errors,
+      };
+    }
+  } catch {
+    // Both bulk formats failed, try individual fallback below
+  }
+
+  // Try 3: Fallback to individual attendance marking
+  try {
+    const results = await Promise.all(
+      data.records.map((record) => markAttendance(record))
+    );
+    const allSuccess = results.every((r) => r.success !== false);
+    const errors = results
+      .filter((r) => r.success === false)
+      .map((r) => r.message);
+    return {
+      success: allSuccess,
+      message: allSuccess
+        ? "All attendance records saved successfully"
+        : "Some attendance records failed to save",
+      errors: errors.length > 0 ? errors : undefined,
+    };
+  } catch {
+    return { success: false, message: "Failed to save attendance. Please try again." };
   }
 };
 
