@@ -164,8 +164,21 @@ export const markBulkAttendance = async (data: {
         errors: response.data.errors,
       };
     }
-  } catch {
-    // First format failed, try alternative format below
+  } catch (error: unknown) {
+    // Capture error response from the bulk endpoint
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      const errorData = axiosError.response.data;
+      // If the backend returned structured error data, return it
+      if (errorData.errors && errorData.errors.length > 0) {
+        return {
+          success: false,
+          message: errorData.message || "Validation Failed",
+          errors: errorData.errors,
+        };
+      }
+      // If only a message, keep it for fallback
+    }
   }
 
   // Try 2: Send records as a plain array [...]
@@ -178,8 +191,19 @@ export const markBulkAttendance = async (data: {
         errors: response.data.errors,
       };
     }
-  } catch {
-    // Both bulk formats failed, try individual fallback below
+  } catch (error: unknown) {
+    // Capture error response from the bulk endpoint
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      const errorData = axiosError.response.data;
+      if (errorData.errors && errorData.errors.length > 0) {
+        return {
+          success: false,
+          message: errorData.message || "Validation Failed",
+          errors: errorData.errors,
+        };
+      }
+    }
   }
 
   // Try 3: Fallback to individual attendance marking
@@ -188,17 +212,31 @@ export const markBulkAttendance = async (data: {
       data.records.map((record) => markAttendance(record))
     );
     const allSuccess = results.every((r) => r.success !== false);
-    const errors = results
+    const errorMessages = results
       .filter((r) => r.success === false)
       .map((r) => r.message);
+    const allErrors = results
+      .filter((r) => r.success === false && r.errors && r.errors.length > 0)
+      .flatMap((r) => r.errors || []);
     return {
       success: allSuccess,
       message: allSuccess
         ? "All attendance records saved successfully"
-        : "Some attendance records failed to save",
-      errors: errors.length > 0 ? errors : undefined,
+        : errorMessages.length > 0
+          ? errorMessages.join("; ")
+          : "Some attendance records failed to save",
+      errors: allErrors.length > 0 ? allErrors : (errorMessages.length > 0 ? errorMessages : undefined),
     };
-  } catch {
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      const errorData = axiosError.response.data;
+      return {
+        success: false,
+        message: errorData.message || "Failed to save attendance",
+        errors: errorData.errors,
+      };
+    }
     return { success: false, message: "Failed to save attendance. Please try again." };
   }
 };
