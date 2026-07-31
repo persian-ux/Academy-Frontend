@@ -13,9 +13,10 @@ import {
   Filter,
   GraduationCap,
   Users,
+  Save,
 } from "lucide-react";
 import {
-  markAttendance,
+  markBulkAttendance,
   getAttendanceHistory,
   getMonthlyAttendanceReport,
   getCourses,
@@ -107,16 +108,16 @@ export default function ManageAttendance() {
   const [loadingData, setLoadingData] = useState(true);
   const [globalError, setGlobalError] = useState("");
 
-  // Tab 1 - Mark Attendance
+  // Tab 1 - Mark Attendance (Bulk)
   const [markGrade, setMarkGrade] = useState<GradeLevel | "">("");
-  const [markStudentId, setMarkStudentId] = useState<number>(0);
+  const [markSection, setMarkSection] = useState<string>("");
   const [markCourseId, setMarkCourseId] = useState<number>(0);
   const [markDate, setMarkDate] = useState(new Date().toISOString().split("T")[0]);
-  const [markStatus, setMarkStatus] = useState<AttendanceStatus>("Present");
-  const [markSubmitting, setMarkSubmitting] = useState(false);
-  const [markSuccess, setMarkSuccess] = useState("");
-  const [markError, setMarkError] = useState("");
-  const [markErrors, setMarkErrors] = useState<string[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<Record<number, AttendanceStatus>>({});
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [bulkSuccess, setBulkSuccess] = useState("");
+  const [bulkError, setBulkError] = useState("");
+  const [bulkErrors, setBulkErrors] = useState<string[]>([]);
 
   // Tab 2 - Attendance History
   const [historyGrade, setHistoryGrade] = useState<GradeLevel | "">("");
@@ -161,6 +162,23 @@ export default function ManageAttendance() {
     return gradeStudents.filter((s) => s.section === section);
   };
 
+  // Get the currently displayed students for the mark attendance tab
+  const getMarkStudents = (): User[] => {
+    return getFilteredStudentsByGradeAndSection(markGrade, markSection);
+  };
+
+  // Helper to initialize attendance records for given students
+  const initAttendanceRecordsForStudents = (students: User[]) => {
+    const newRecords: Record<number, AttendanceStatus> = {};
+    students.forEach((s) => {
+      newRecords[s.userId] = "Present";
+    });
+    setAttendanceRecords(newRecords);
+    setBulkSuccess("");
+    setBulkError("");
+    setBulkErrors([]);
+  };
+
   // Load initial data
   useEffect(() => {
     let cancelled = false;
@@ -188,42 +206,47 @@ export default function ManageAttendance() {
     };
   }, []);
 
-  // ============ TAB 1: Mark Attendance ============
-  const handleMarkAttendance = async () => {
-    if (!markStudentId || !markCourseId) {
-      setMarkError("Please select a student, section, and grade");
+  // ============ TAB 1: Mark Attendance (Bulk) ============
+  const handleBulkMarkAttendance = async () => {
+    const students = getMarkStudents();
+    if (students.length === 0) {
+      setBulkError("No students found for the selected grade and section");
       return;
     }
-    setMarkSubmitting(true);
-    setMarkError("");
-    setMarkSuccess("");
-    setMarkErrors([]);
+    if (!markCourseId) {
+      setBulkError("Please select a course/section");
+      return;
+    }
+
+    setBulkSubmitting(true);
+    setBulkError("");
+    setBulkSuccess("");
+    setBulkErrors([]);
+
+    const records = students.map((student) => ({
+      student_id: student.userId,
+      course_id: markCourseId,
+      date: markDate,
+      status: attendanceRecords[student.userId] || "Present",
+    }));
 
     try {
-      const res = await markAttendance({
-        student_id: markStudentId,
-        course_id: markCourseId,
-        date: markDate,
-        status: markStatus,
-      });
-
+      const res = await markBulkAttendance({ records });
       if (res.success) {
-        const student = allStudents.find((s) => s.userId === markStudentId);
-        const studentName = student?.name || "Unknown";
-        setMarkSuccess(
-          `Attendance marked for ${studentName} (${markGrade}) on ${markDate} as ${markStatus}`
+        setBulkSuccess(
+          `Attendance marked successfully for ${records.length} student(s) in ${markGrade}${markSection ? ` - ${markSection}` : ""} on ${markDate}`
         );
       } else {
         if (res.errors && res.errors.length > 0) {
-          setMarkErrors(res.errors);
+          setBulkErrors(res.errors);
         } else {
-          setMarkError(res.message || "Failed to mark attendance");
+          setBulkError(res.message || "Failed to mark attendance");
         }
       }
     } catch {
-      setMarkError("Failed to mark attendance");
+      setBulkError("Failed to mark attendance");
     } finally {
-      setMarkSubmitting(false);
+      setBulkSubmitting(false);
     }
   };
 
@@ -336,13 +359,13 @@ export default function ManageAttendance() {
         ))}
       </div>
 
-      {/* ==================== TAB 1: Mark Attendance ==================== */}
+      {/* ==================== TAB 1: Mark Attendance (Bulk) ==================== */}
       {activeTab === "mark" && (
         <div className="space-y-6">
           <div className="p-6 rounded-xl bg-white/5 border border-white/10">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-primary" />
-              Mark Attendance - Grade Wise
+              Mark Attendance - Grade & Section Wise
             </h3>
 
             {/* Grade Selector */}
@@ -356,10 +379,11 @@ export default function ManageAttendance() {
                     key={grade}
                     onClick={() => {
                       setMarkGrade(grade);
-                      setMarkStudentId(0);
-                      setMarkSuccess("");
-                      setMarkError("");
-                      setMarkErrors([]);
+                      setMarkSection("");
+                      setMarkCourseId(0);
+                      setBulkSuccess("");
+                      setBulkError("");
+                      setBulkErrors([]);
                     }}
                     className={`px-5 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                       markGrade === grade
@@ -374,130 +398,207 @@ export default function ManageAttendance() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {/* Student Select */}
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Student
-                </label>
-                <Select
-                  value={markStudentId ? String(markStudentId) : undefined}
-                  onValueChange={(value) => {
-                    setMarkStudentId(Number(value));
-                    setMarkSuccess("");
-                    setMarkError("");
-                    setMarkErrors([]);
-                  }}
-                  disabled={!markGrade}
-                >
-                  <SelectTrigger className="w-full disabled:opacity-50">
-                    <SelectValue placeholder={markGrade ? `Select student from ${markGrade}` : "Select a grade first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getStudentsByGrade(markGrade).map((s) => (
-                      <SelectItem key={s.userId} value={String(s.userId)}>
-                        {s.name} ({s.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {markGrade && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {getStudentsByGrade(markGrade).length} student(s) in {markGrade}
-                  </p>
+            {markGrade && (
+              <>
+                {/* Filters Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {/* Section Select */}
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-1.5">
+                      <Filter className="w-3.5 h-3.5 inline mr-1" />
+                      Select Section
+                    </label>
+                  <Select
+                      value={markSection}
+                      onValueChange={(value) => {
+                        setMarkSection(value);
+                        setMarkCourseId(0);
+                        if (value) {
+                          const students = getFilteredStudentsByGradeAndSection(markGrade, value);
+                          initAttendanceRecordsForStudents(students);
+                        } else {
+                          setAttendanceRecords({});
+                          setBulkSuccess("");
+                          setBulkError("");
+                          setBulkErrors([]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a section" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getSectionsByGrade(markGrade).map((section) => (
+                          <SelectItem key={section} value={section}>
+                            {section}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!markSection && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Select a section to view students
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Course Select */}
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-1.5">
+                      <BookOpen className="w-3.5 h-3.5 inline mr-1" />
+                      Select Course
+                    </label>
+                    <Select
+                      value={markCourseId ? String(markCourseId) : undefined}
+                      onValueChange={(value) => {
+                        setMarkCourseId(Number(value));
+                        setBulkSuccess("");
+                        setBulkError("");
+                        setBulkErrors([]);
+                      }}
+                      disabled={!markSection}
+                    >
+                      <SelectTrigger className="w-full disabled:opacity-50">
+                        <SelectValue placeholder={markSection ? "Select a course" : "Select section first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courses.map((c) => (
+                          <SelectItem key={c.courseId} value={String(c.courseId)}>
+                            {c.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date Picker */}
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-1.5">
+                      <Calendar className="w-3.5 h-3.5 inline mr-1" />
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={markDate}
+                      onChange={(e) => {
+                        setMarkDate(e.target.value);
+                        setBulkSuccess("");
+                        setBulkError("");
+                        setBulkErrors([]);
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Student List with Status */}
+                {markSection ? (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm text-muted-foreground">
+                        <Users className="w-3.5 h-3.5 inline mr-1" />
+                        {getMarkStudents().length} student(s) in {markGrade} - {markSection}
+                      </p>
+                    </div>
+
+                    {getMarkStudents().length > 0 ? (
+                      <div className="overflow-x-auto rounded-xl border border-white/10 mb-6">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-white/5 border-b border-white/10">
+                              <th className="text-left p-3 text-muted-foreground font-medium text-sm">
+                                #
+                              </th>
+                              <th className="text-left p-3 text-muted-foreground font-medium text-sm">
+                                <Users className="w-3.5 h-3.5 inline mr-1" />
+                                Student Name
+                              </th>
+                              <th className="text-left p-3 text-muted-foreground font-medium text-sm">
+                                Email
+                              </th>
+                              <th className="text-center p-3 text-muted-foreground font-medium text-sm">
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {getMarkStudents().map((student, index) => (
+                              <tr
+                                key={student.userId}
+                                className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                              >
+                                <td className="p-3 text-white/60 text-sm">{index + 1}</td>
+                                <td className="p-3 text-white text-sm font-medium">
+                                  {student.name}
+                                </td>
+                                <td className="p-3 text-white/70 text-sm">
+                                  {student.email}
+                                </td>
+                                <td className="p-3">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    {STATUS_OPTIONS.map((status) => (
+                                      <button
+                                        key={status}
+                                        onClick={() => {
+                                          setAttendanceRecords((prev) => ({
+                                            ...prev,
+                                            [student.userId]: status,
+                                          }));
+                                          setBulkSuccess("");
+                                          setBulkError("");
+                                          setBulkErrors([]);
+                                        }}
+                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                          attendanceRecords[student.userId] === status
+                                            ? `${STATUS_BG[status]} text-white shadow-sm`
+                                            : "bg-white/5 text-muted-foreground border-white/10 hover:border-white/30 hover:text-white"
+                                        }`}
+                                        title={status}
+                                      >
+                                        {status === "Present" && <Check className="w-3 h-3" />}
+                                        {status === "Absent" && <X className="w-3 h-3" />}
+                                        {status === "Late" && <Clock className="w-3 h-3" />}
+                                        {status === "Excused" && <AlertCircle className="w-3 h-3" />}
+                                        <span className="hidden sm:inline">{status}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-muted-foreground rounded-xl border border-white/10 mb-6">
+                        No students found in {markGrade} - {markSection}
+                      </div>
+                    )}
+
+                    {/* Save Attendance Button */}
+                    {getMarkStudents().length > 0 && (
+                      <button
+                        onClick={handleBulkMarkAttendance}
+                        disabled={bulkSubmitting || !markCourseId}
+                        className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {bulkSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                        <Save className="w-4 h-4" />
+                        Save Attendance
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground rounded-xl border border-white/10">
+                    Please select a section to view students and mark attendance
+                  </div>
                 )}
-              </div>
-
-              {/* Section Select */}
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Section
-                </label>
-                <Select
-                  value={markCourseId ? String(markCourseId) : undefined}
-                  onValueChange={(value) => {
-                    setMarkCourseId(Number(value));
-                    setMarkSuccess("");
-                    setMarkError("");
-                    setMarkErrors([]);
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((c) => (
-                      <SelectItem key={c.courseId} value={String(c.courseId)}>
-                        {c.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Date Picker */}
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={markDate}
-                  onChange={(e) => {
-                    setMarkDate(e.target.value);
-                    setMarkSuccess("");
-                    setMarkError("");
-                    setMarkErrors([]);
-                  }}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-
-            {/* Status Radio Buttons */}
-            <div className="mb-6">
-              <label className="block text-sm text-muted-foreground mb-2">
-                Status
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {STATUS_OPTIONS.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      setMarkStatus(status);
-                      setMarkSuccess("");
-                      setMarkError("");
-                      setMarkErrors([]);
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                      markStatus === status
-                        ? `${STATUS_BG[status]} text-white`
-                        : "bg-white/5 text-muted-foreground border-white/10 hover:border-white/30"
-                    }`}
-                  >
-                    {status === "Present" && <Check className="w-3.5 h-3.5 inline mr-1.5" />}
-                    {status === "Absent" && <X className="w-3.5 h-3.5 inline mr-1.5" />}
-                    {status === "Late" && <Clock className="w-3.5 h-3.5 inline mr-1.5" />}
-                    {status === "Excused" && <AlertCircle className="w-3.5 h-3.5 inline mr-1.5" />}
-                    {status}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              onClick={handleMarkAttendance}
-              disabled={markSubmitting || !markStudentId || !markCourseId || !markGrade}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {markSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Submit Attendance
-            </button>
+              </>
+            )}
           </div>
 
           {/* Success / Error Feedback */}
-          {markSuccess && (
+          {bulkSuccess && (
             <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
               <div className="flex items-start gap-3">
                 <div className="p-1 rounded-full bg-green-500/20">
@@ -505,13 +606,13 @@ export default function ManageAttendance() {
                 </div>
                 <div>
                   <p className="text-green-400 font-medium text-sm">Success</p>
-                  <p className="text-green-300/80 text-sm mt-0.5">{markSuccess}</p>
+                  <p className="text-green-300/80 text-sm mt-0.5">{bulkSuccess}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {markError && (
+          {bulkError && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
               <div className="flex items-start gap-3">
                 <div className="p-1 rounded-full bg-red-500/20">
@@ -519,13 +620,13 @@ export default function ManageAttendance() {
                 </div>
                 <div>
                   <p className="text-red-400 font-medium text-sm">Error</p>
-                  <p className="text-red-300/80 text-sm mt-0.5">{markError}</p>
+                  <p className="text-red-300/80 text-sm mt-0.5">{bulkError}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {markErrors.length > 0 && (
+          {bulkErrors.length > 0 && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
               <div className="flex items-start gap-3">
                 <div className="p-1 rounded-full bg-red-500/20">
@@ -534,7 +635,7 @@ export default function ManageAttendance() {
                 <div>
                   <p className="text-red-400 font-medium text-sm mb-1">Validation Errors</p>
                   <ul className="list-disc list-inside space-y-0.5">
-                    {markErrors.map((err, i) => (
+                    {bulkErrors.map((err, i) => (
                       <li key={i} className="text-red-300/80 text-sm">
                         {err}
                       </li>
