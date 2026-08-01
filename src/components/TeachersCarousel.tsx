@@ -26,6 +26,21 @@ const teachers = [
     credentials: "LLB, Punjab University",
     image: "/Junaid-Jabbar.jpeg",
   },
+  {
+    name: "Dr. Arslan Asif",
+    subject: "Nutrition and Dietetics",
+    bio: "Nutrition and dietetics expert dedicated to promoting health and wellness through evidence-based dietary practices.",
+    credentials:
+      "Master in Nutrition and Dietetics (MS), University of Management and Technology",
+    image: "/Arslan-Asif.PNG",
+  },
+  {
+    name: "Zunaira Aslam",
+    subject: "Physics",
+    bio: "Physics scholar passionate about unraveling the mysteries of the universe and inspiring students in scientific inquiry.",
+    credentials: "MPhil Physics, University of Education",
+    image: "/Zunaira-Aslam.jpeg",
+  },
 ];
 
 export default function TeachersCarousel() {
@@ -98,7 +113,7 @@ export default function TeachersCarousel() {
             Meet Our Expert Teachers
           </h2>
           <p className="text-muted-foreground text-base leading-relaxed max-w-xl mx-auto">
-            Passionate educators shaping tomorrow&apos;s scientists with dedication,
+            Passionate educators shaping tomorrow's scientists with dedication,
             expertise, and inspiration.
           </p>
         </div>
@@ -184,4 +199,3 @@ export default function TeachersCarousel() {
     </section>
   );
 }
-

@@ -34,6 +34,18 @@ const students = [
     university: "University of Lahore",
     image: "/Tayyab-Maqbool.jpeg",
   },
+  {
+    name: "Ameer Hamza",
+    degree: "Software Engineer",
+    university: "Punjab University",
+    image: "/Ameer-Hamza.jpeg",
+  },
+  {
+    name: "Mahrukh Iftikhar",
+    degree: "BS Chemistry",
+    university: "Punjab University",
+    image: "/Mahrukh-Iftikhar.jpeg",
+  },
 ];
 
 export default function BrilliantStudents() {
