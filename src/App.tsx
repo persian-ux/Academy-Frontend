@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Achievements from "@/components/Achievements";
 import TeachersCarousel from "@/components/TeachersCarousel";
+import BrilliantStudents from "@/components/BrilliantStudents";
 import Footer from "@/components/Footer";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
@@ -31,6 +32,7 @@ function HomePage() {
       <About />
       <Achievements />
       <TeachersCarousel />
+      <BrilliantStudents />
       <Footer />
     </>
   );
@@ -92,4 +94,3 @@ function App() {
 }
 
 export default App;
-
