@@ -10,6 +10,12 @@ const quickLinks = [
   { label: "Contact", href: "#footer" },
 ];
 
+const phoneNumbers = [
+  { label: "0331-0457545", href: "tel:03310457545" },
+  { label: "0309-6336397", href: "tel:03096336397" },
+  { label: "0309-4819094", href: "tel:03094819094" },
+];
+
 const socialIcons = [
   { icon: Send, label: "Send", href: "#" },
   { icon: Globe, label: "Globe", href: "#" },
@@ -69,25 +75,30 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <a
-                  href="mailto:info@noumanscience.edu"
+                  href="mailto:nomanschool11@gmail.com"
                   className="text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
                 >
-                  info@noumanscience.edu
+                  nomanschool11@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                <a
-                  href="tel:+1234567890"
-                  className="text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
-                >
-                  +1 (234) 567-890
-                </a>
+                <div className="flex flex-col gap-1">
+                  {phoneNumbers.map((phone) => (
+                    <a
+                      key={phone.href}
+                      href={phone.href}
+                      className="text-muted-foreground hover:text-primary transition-colors duration-300 text-sm"
+                    >
+                      {phone.label}
+                    </a>
+                  ))}
+                </div>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <span className="text-muted-foreground text-sm">
-                  123 Science Avenue, Innovation City, IC 10001
+                  Rana Super Store, near Peer Bazar, Green Town, Lahore
                 </span>
               </li>
             </ul>
