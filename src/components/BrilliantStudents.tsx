@@ -35,6 +35,12 @@ const students = [
     image: "/Adeel-Ahmad.jpeg",
   },
   {
+    name: "Ali Rizwan",
+    degree: "BS Information Engineering Technology",
+    university: "University of Lahore",
+    image: "/Ali-Rizwan.jpeg",
+  },
+  {
     name: "Muhammad Tayyab",
     degree: "BS Nursing",
     university: "University of Lahore",
