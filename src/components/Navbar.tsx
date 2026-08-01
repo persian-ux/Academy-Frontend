@@ -202,6 +202,18 @@ export default function Navbar() {
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
                 </a>
                 <a
+                  href="#students"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector("#students");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="relative text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium group"
+                >
+                  Brilliant Students
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                </a>
+                <a
                   href="#footer"
                   onClick={(e) => {
                     e.preventDefault();
@@ -319,6 +331,18 @@ export default function Navbar() {
                   className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
                 >
                   Teachers
+                </a>
+                <a
+                  href="#students"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsOpen(false);
+                    const el = document.querySelector("#students");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                >
+                  Brilliant Students
                 </a>
                 <a
                   href="#footer"

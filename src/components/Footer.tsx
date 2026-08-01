@@ -6,6 +6,7 @@ const quickLinks = [
   { label: "About", href: "#about" },
   { label: "Programs", href: "#hero" },
   { label: "Teachers", href: "#teachers" },
+  { label: "Brilliant Students", href: "#students" },
   { label: "Contact", href: "#footer" },
 ];
 
@@ -126,4 +127,3 @@ export default function Footer() {
     </footer>
   );
 }
-
