@@ -5,46 +5,26 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const teachers = [
   {
-    name: "Dr. Sarah Chen",
-    subject: "Astrophysics",
-    bio: "Award-winning astrophysicist with research published in Nature. Passionate about making complex cosmic phenomena accessible to young minds.",
-    credentials: "Ph.D. in Astrophysics, MIT",
-    initials: "SC",
+    name: "Muhammad Zeeshan",
+    subject: "Physics",
+    bio: "Principal at Riphah International College, Township Campus. Dedicated to academic excellence and student success.",
+    credentials: "M.Phil in Physics, Riphah International University Lahore",
+    image: "/Muhammad-Zeeshan.jpeg",
   },
   {
-    name: "Prof. James Mitchell",
-    subject: "Organic Chemistry",
-    bio: "Over 20 years of teaching excellence with a focus on green chemistry and sustainable laboratory practices. Mentor to numerous national science fair winners.",
-    credentials: "Ph.D. in Chemistry, Stanford",
-    initials: "JM",
+    name: "Dr. Abdul Rehman",
+    subject: "Islamic Studies",
+    bio: "Scholar of Islamic studies committed to imparting deep religious knowledge and values to students.",
+    credentials:
+      "Ph.D. in Islamic Studies, University of Lahore; MS in Islamic Studies, University of Management and Technology",
+    image: "/Dr-AbdulRehman.jpeg",
   },
   {
-    name: "Dr. Amara Okafor",
-    subject: "Molecular Biology",
-    bio: "Leading researcher in genetic engineering and CRISPR technology. Dedicated to inspiring the next generation of biotechnologists.",
-    credentials: "Ph.D. in Molecular Biology, Cambridge",
-    initials: "AO",
-  },
-  {
-    name: "Prof. David Park",
-    subject: "Quantum Physics",
-    bio: "Former CERN researcher who brings particle physics to life. Known for his interactive demonstrations and ability to simplify the most complex theories.",
-    credentials: "Ph.D. in Physics, Caltech",
-    initials: "DP",
-  },
-  {
-    name: "Dr. Elena Vasquez",
-    subject: "Environmental Science",
-    bio: "Climate change expert and sustainability advocate. Leads field research expeditions and empowers students to become environmental stewards.",
-    credentials: "Ph.D. in Environmental Science, Yale",
-    initials: "EV",
-  },
-  {
-    name: "Prof. Alexander Kim",
-    subject: "Computer Science",
-    bio: "AI and machine learning specialist with industry experience at Google Brain. Teaches cutting-edge programming and computational thinking.",
-    credentials: "Ph.D. in Computer Science, Carnegie Mellon",
-    initials: "AK",
+    name: "Junaid Jabbar",
+    subject: "Law",
+    bio: "Legal professional passionate about educating the next generation of legal minds.",
+    credentials: "LLB, Punjab University",
+    image: "/Junaid-Jabbar.jpeg",
   },
 ];
 
@@ -136,11 +116,13 @@ export default function TeachersCarousel() {
                 key={`${teacher.name}-${index}`}
                 className="group relative bg-card/50 border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:bg-card/80"
               >
-                {/* Image Placeholder with Initials */}
+                {/* Teacher Image */}
                 <div className="relative w-28 h-28 mx-auto mt-6 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                  <span className="text-3xl font-bold text-gradient">
-                    {teacher.initials}
-                  </span>
+                  <img
+                    src={teacher.image}
+                    alt={teacher.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 {/* Name & Subject (Always Visible) */}
