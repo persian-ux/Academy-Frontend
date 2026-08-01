@@ -11,6 +11,12 @@ const students = [
     image: "/Ahsan-Sattar.jpeg",
   },
   {
+    name: "Captain Dr Asaf Ali Hashmi",
+    degree: "MBBS",
+    university: "Army Medical College",
+    image: "/Asif-Ali.png",
+  },
+  {
     name: "Aqsa Aslam",
     degree: "BS Mathematics",
     university: "University of Education",

@@ -5,6 +5,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const teachers = [
   {
+    name: "Majid Mehmood",
+    subject: "Education",
+    bio: "Educator with a strong academic background in education, committed to delivering quality learning experiences and fostering student growth.",
+    credentials: "MPhil in Education, Punjab University",
+    image: "/Majid.jpeg",
+  },
+  {
     name: "Muhammad Zeeshan",
     subject: "Physics",
     bio: "Principal at Riphah International College, Township Campus. Dedicated to academic excellence and student success.",
@@ -132,11 +139,11 @@ export default function TeachersCarousel() {
                 className="group relative bg-card/50 border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:bg-card/80"
               >
                 {/* Teacher Image */}
-                <div className="relative w-28 h-28 mx-auto mt-6 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <div className="relative w-32 h-40 md:w-36 md:h-44 mx-auto mt-6 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                   <img
                     src={teacher.image}
                     alt={teacher.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                   />
                 </div>
 
