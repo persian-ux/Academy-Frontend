@@ -19,8 +19,6 @@ import {
   markBulkAttendance,
   getAttendanceHistory,
   getMonthlyAttendanceReport,
-  getCourses,
-  type CourseData,
   type AttendanceRecord,
   type MonthlyReportData,
 } from "@/services/adminService";
@@ -100,14 +98,12 @@ export default function ManageAttendance() {
   // Shared state
   const [activeTab, setActiveTab] = useState<TabId>("mark");
   const [allStudents, setAllStudents] = useState<User[]>([]);
-  const [courses, setCourses] = useState<CourseData[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [globalError, setGlobalError] = useState("");
 
   // Tab 1 - Mark Attendance (Bulk)
   const [markGrade, setMarkGrade] = useState<GradeLevel | "">("");
   const [markSection, setMarkSection] = useState<string>("");
-  const [markCourseId, setMarkCourseId] = useState<number>(0);
   const [markDate, setMarkDate] = useState(new Date().toISOString().split("T")[0]);
   const [attendanceRecords, setAttendanceRecords] = useState<Record<number, AttendanceStatus>>({});
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
@@ -181,17 +177,10 @@ export default function ManageAttendance() {
     const loadData = async () => {
       try {
         setLoadingData(true);
-        const [coursesRes, usersRes] = await Promise.all([
-          getCourses(),
-          userService.list(),
-        ]);
+        const usersRes = await userService.list();
         if (cancelled) return;
-        if (coursesRes.success) setCourses(coursesRes.courses);
         if (usersRes.success && usersRes.data) {
           setAllStudents(usersRes.data.filter((u: User) => u.role === "Student"));
-        }
-        if (!cancelled && !coursesRes.success) {
-          setGlobalError("Could not load courses. Please ensure backend is running.");
         }
       } catch {
         if (!cancelled) setGlobalError("Failed to load data. Make sure the server is running.");
@@ -220,7 +209,6 @@ export default function ManageAttendance() {
 
     const records = students.map((student) => ({
       student_id: student.userId,
-      course_id: markCourseId || 0,
       date: markDate,
       status: attendanceRecords[student.userId] || "Present",
     }));
@@ -375,7 +363,6 @@ export default function ManageAttendance() {
                     onClick={() => {
                       setMarkGrade(grade);
                       setMarkSection("");
-                      setMarkCourseId(0);
                       setAttendanceRecords({});
                       setBulkSuccess("");
                       setBulkError("");
@@ -397,7 +384,7 @@ export default function ManageAttendance() {
             {markGrade && (
               <>
                 {/* Filters Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {/* Section Select */}
                   <div>
                     <label className="block text-sm text-muted-foreground mb-1.5">
@@ -409,7 +396,6 @@ export default function ManageAttendance() {
                         value={markSection}
                         onValueChange={(value) => {
                           setMarkSection(value);
-                          setMarkCourseId(0);
                           if (value) {
                             const students = getFilteredStudentsByGradeAndSection(markGrade, value);
                             initAttendanceRecordsForStudents(students);
@@ -442,42 +428,6 @@ export default function ManageAttendance() {
                         Select a section to view students
                       </p>
                     )}
-                  </div>
-
-                  {/* Course Select */}
-                  <div>
-                    <label className="block text-sm text-muted-foreground mb-1.5">
-                      <BookOpen className="w-3.5 h-3.5 inline mr-1" />
-                      Select Course (optional)
-                    </label>
-                    <Select
-                      value={markCourseId ? String(markCourseId) : undefined}
-                      onValueChange={(value) => {
-                        setMarkCourseId(Number(value));
-                        setBulkSuccess("");
-                        setBulkError("");
-                        setBulkErrors([]);
-                      }}
-                      disabled={!markSection}
-                    >
-                      <SelectTrigger className="w-full disabled:opacity-50">
-                        <SelectValue placeholder={markSection ? "Optional - select course" : "Select section first"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">No course (general)</SelectItem>
-                        {courses.length > 0 ? (
-                          courses.map((c) => (
-                            <SelectItem key={c.courseId} value={String(c.courseId)}>
-                              {c.title}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="" disabled>
-                            No courses available
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   {/* Date Picker */}
@@ -526,7 +476,7 @@ export default function ManageAttendance() {
                                   Class / Section
                                 </th>
                                 {STATUS_OPTIONS.map((status) => (
-                                  <th key={status} className="text-center p-3 text-muted-foreground font-medium text-sm min-w-[90px]">
+                                  <th key={status} className="text-center p-3 text-muted-foreground font-medium text-sm min-w-22.5">
                                     <div className="flex items-center justify-center gap-1">
                                       {STATUS_ICONS[status]}
                                       <span>{status}</span>
@@ -740,7 +690,7 @@ export default function ManageAttendance() {
                 </div>
 
                 {/* Student Select */}
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-50">
                   <label className="block text-sm text-muted-foreground mb-1.5">
                     <Users className="w-3.5 h-3.5 inline mr-1" />
                     Select Student
