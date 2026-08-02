@@ -376,7 +376,7 @@ export default function UploadMarks() {
                           <tr key={student.userId} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                             <td className="p-3 text-muted-foreground text-sm">{idx + 1}</td>
                             <td className="p-3 text-white text-sm font-medium">{student.name}</td>
-                            <td className="p-3 text-muted-foreground text-sm">{student.email.split("@")[0]}</td>
+                            <td className="p-3 text-muted-foreground text-sm">{student.email?.split("@")[0] ?? "N/A"}</td>
                             <td className="p-3">
                               <input
                                 type="number"

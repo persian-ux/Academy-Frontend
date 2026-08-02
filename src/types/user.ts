@@ -4,31 +4,37 @@ export type GradeLevel = "8th" | "9th" | "10th" | "11th" | "12th";
 export interface User {
   userId: number;
   name: string;
-  email: string;
+  email: string | null;
+  username?: string | null;
   role: Role;
   grade_level: GradeLevel | null;
   section?: string | null;
   courseId?: number | null;
+  student_id?: number | null;
   createdAt: string | null;
   isActive: boolean;
 }
 
 export interface CreateUserPayload {
   name: string;
-  email: string;
+  email?: string | null;
+  username?: string | null;
   password: string;
   role: "Teacher" | "Student";
   grade_level?: GradeLevel | null;
   courseId?: number | null;
+  student_id?: number | null;
 }
 
 export interface UpdateUserPayload {
   name?: string;
-  email?: string;
+  email?: string | null;
+  username?: string | null;
   password?: string;
   role?: "Teacher" | "Student";
   grade_level?: GradeLevel | null;
   courseId?: number | null;
+  student_id?: number | null;
 }
 
 export interface ApiResponse<T = unknown> {

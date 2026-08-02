@@ -13,6 +13,16 @@ export const getAllUsers = async (): Promise<{ success: boolean; message: string
   }
 };
 
+export const getUserById = async (userId: number): Promise<{ success: boolean; message: string; data?: UserType }> => {
+  try {
+    const response = await api.get(`/users/${userId}`);
+    return response.data;
+  } catch (error: unknown) {
+    const errMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to fetch user";
+    return { success: false, message: errMsg };
+  }
+};
+
 export const createUser = async (payload: CreateUserPayload): Promise<{ success: boolean; message: string; data?: UserType }> => {
   try {
     const response = await api.post("/users", payload);

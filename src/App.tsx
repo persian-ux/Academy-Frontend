@@ -13,6 +13,10 @@ import SignUp from "@/pages/SignUp";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ManageUsers from "@/pages/admin/ManageUsers";
+import ManageStudents from "@/pages/admin/ManageStudents";
+import StudentForm from "@/pages/admin/StudentForm";
+import StudentDetail from "@/pages/admin/StudentDetail";
+import CreateStudentLogin from "@/pages/admin/CreateStudentLogin";
 import ManageSections from "@/pages/admin/ManageCourses";
 import ManageAttendance from "@/pages/admin/ManageAttendance";
 import ManageTests from "@/pages/admin/ManageTests";
@@ -71,6 +75,11 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<ManageUsers />} />
+            <Route path="students" element={<ManageStudents />} />
+            <Route path="students/create" element={<StudentForm />} />
+            <Route path="students/:id" element={<StudentDetail />} />
+            <Route path="students/:id/edit" element={<StudentForm />} />
+            <Route path="students/:id/create-login" element={<CreateStudentLogin />} />
             <Route path="courses" element={<ManageSections />} />
             <Route path="attendance" element={<ManageAttendance />} />
             <Route path="tests" element={<ManageTests />} />

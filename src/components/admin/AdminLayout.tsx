@@ -11,11 +11,13 @@ import {
   GraduationCap,
   ChevronLeft,
   ChevronRight,
+  UserCog,
 } from "lucide-react";
 
 const sidebarItems = [
   { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, path: "/admin" },
   { label: "Users", icon: <Users className="w-5 h-5" />, path: "/admin/users" },
+  { label: "Students", icon: <UserCog className="w-5 h-5" />, path: "/admin/students" },
   { label: "Sections", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
   { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/attendance" },
   { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/admin/tests" },

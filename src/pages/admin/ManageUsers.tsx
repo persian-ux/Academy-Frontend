@@ -14,8 +14,10 @@ import {
   PowerOff,
 } from "lucide-react";
 import { getAllUsers, createUser, updateUser, deleteUser, toggleUserStatus } from "@/services/userService";
+import { getStudents } from "@/services/studentService";
 import { getCourses, type CourseData } from "@/services/adminService";
 import type { User } from "@/services/userService";
+import type { Student } from "@/types/student";
 import type { GradeLevel } from "@/types/user";
 import {
   DropdownMenu,
@@ -55,6 +57,7 @@ const GRADE_LEVELS: GradeLevel[] = ["8th", "9th", "10th", "11th", "12th"];
 
 export default function ManageUsers() {
   const [users, setUsers] = useState<User[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -65,10 +68,12 @@ export default function ManageUsers() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    username: "",
     password: "",
     role: "Student" as "Teacher" | "Student",
     grade_level: "" as GradeLevel | "",
     courseId: 0,
+    student_id: "" as string,
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
@@ -112,16 +117,44 @@ export default function ManageUsers() {
     }
   };
 
+  const loadStudents = async () => {
+    try {
+      const res = await getStudents();
+      if (res.success) setStudents(res.data);
+    } catch {
+      // silent
+    }
+  };
+
   useEffect(() => {
     loadUsers();
     loadCourses();
+    loadStudents();
   }, []);
+
+  // Students without a linked login (for the student_id dropdown)
+  const linkedStudentIds = new Set<number>();
+  users.forEach((u) => {
+    if (u.student_id != null) linkedStudentIds.add(u.student_id);
+  });
+  const availableStudents = students.filter((s) => !linkedStudentIds.has(s.id));
+  const studentNameById = (sid: number | null | undefined) =>
+    sid ? students.find((s) => s.id === sid)?.name || `#${sid}` : null;
 
   const openCreateModal = async () => {
     setEditingUser(null);
-    setForm({ name: "", email: "", password: "", role: "Student", grade_level: "", courseId: 0 });
+    setForm({
+      name: "",
+      email: "",
+      username: "",
+      password: "",
+      role: "Student",
+      grade_level: "",
+      courseId: 0,
+      student_id: "",
+    });
     setFormError("");
-    await loadCourses();
+    await Promise.all([loadCourses(), loadStudents()]);
     setShowModal(true);
   };
 
@@ -129,15 +162,29 @@ export default function ManageUsers() {
     setEditingUser(user);
     setForm({
       name: user.name,
-      email: user.email,
+      email: user.email || "",
+      username: user.username || "",
       password: "",
       role: user.role === "Admin" ? "Teacher" : (user.role as "Teacher" | "Student"),
       grade_level: user.grade_level || "",
       courseId: user.courseId || 0,
+      student_id: user.student_id ? String(user.student_id) : "",
     });
     setFormError("");
-    await loadCourses();
+    await Promise.all([loadCourses(), loadStudents()]);
     setShowModal(true);
+  };
+
+  // When a student is selected in the form, pre-fill the name
+  const handleStudentSelect = (value: string) => {
+    if (value) {
+      const selected = students.find((s) => s.id === Number(value));
+      if (selected) {
+        setForm((f) => ({ ...f, student_id: value, name: selected.name }));
+        return;
+      }
+    }
+    setForm((f) => ({ ...f, student_id: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,23 +197,28 @@ export default function ManageUsers() {
         // Update existing user
         const payload: {
           name: string;
-          email: string;
+          email?: string | null;
+          username?: string | null;
           role: "Teacher" | "Student";
           grade_level?: GradeLevel | null;
           courseId?: number | null;
+          student_id?: number | null;
           password?: string;
         } = {
           name: form.name,
-          email: form.email,
+          email: form.email || null,
+          username: form.username || null,
           role: form.role,
         };
 
         if (form.role === "Student") {
           payload.grade_level = form.grade_level || null;
           payload.courseId = form.courseId || null;
+          payload.student_id = form.student_id ? Number(form.student_id) : null;
         } else {
           payload.grade_level = null;
           payload.courseId = null;
+          payload.student_id = null;
         }
 
         // Only send password if user entered a new one
@@ -186,14 +238,17 @@ export default function ManageUsers() {
         // Create new user
         const payload: {
           name: string;
-          email: string;
+          email?: string | null;
+          username?: string | null;
           password: string;
           role: "Teacher" | "Student";
           grade_level?: GradeLevel | null;
           courseId?: number | null;
+          student_id?: number | null;
         } = {
           name: form.name,
-          email: form.email,
+          email: form.email || null,
+          username: form.username || null,
           password: form.password,
           role: form.role,
         };
@@ -201,6 +256,7 @@ export default function ManageUsers() {
         if (form.role === "Student") {
           payload.grade_level = form.grade_level || null;
           payload.courseId = form.courseId || null;
+          payload.student_id = form.student_id ? Number(form.student_id) : null;
         }
 
         const res = await createUser(payload);
@@ -324,9 +380,10 @@ export default function ManageUsers() {
           <thead>
             <tr className="bg-white/5 border-b border-white/10">
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Name</th>
-              <th className="text-left p-4 text-muted-foreground font-medium text-sm">Email</th>
+              <th className="text-left p-4 text-muted-foreground font-medium text-sm">Email / Username</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Role</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Class & Section</th>
+              <th className="text-left p-4 text-muted-foreground font-medium text-sm">Linked Student</th>
               <th className="text-left p-4 text-muted-foreground font-medium text-sm">Status</th>
               <th className="text-right p-4 text-muted-foreground font-medium text-sm">Actions</th>
             </tr>
@@ -338,7 +395,14 @@ export default function ManageUsers() {
                 className="border-b border-white/5 hover:bg-white/5 transition-colors"
               >
                 <td className="p-4 text-white text-sm font-medium">{user.name}</td>
-                <td className="p-4 text-muted-foreground text-sm">{user.email}</td>
+                <td className="p-4 text-muted-foreground text-sm">
+                  <div className="flex flex-col">
+                    <span>{user.email || "—"}</span>
+                    {user.username && (
+                      <span className="text-xs text-muted-foreground/70">@{user.username}</span>
+                    )}
+                  </div>
+                </td>
                 <td className="p-4">
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
@@ -360,6 +424,18 @@ export default function ManageUsers() {
                           courses.find((c) => c.courseId === user.courseId)?.title ||
                           "No section"}
                       </span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="p-4 text-sm">
+                  {user.student_id ? (
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium">
+                        {studentNameById(user.student_id)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">ID: {user.student_id}</span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">—</span>
@@ -435,7 +511,7 @@ export default function ManageUsers() {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
                   <UsersIcon className="w-8 h-8 mx-auto mb-2" />
                   No users found
                 </td>
@@ -448,7 +524,7 @@ export default function ManageUsers() {
       {/* Create/Edit User Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-md mx-4">
+          <div className="bg-card border border-white/10 rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
                 {editingUser ? "Edit User" : "Create New User"}
@@ -470,14 +546,27 @@ export default function ManageUsers() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-muted-foreground mb-1">Email</label>
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Email <span className="text-xs">(optional if linking a student)</span>
+                </label>
                 <input
                   type="email"
-                  required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                   placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Username <span className="text-xs">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                  placeholder="ali45"
                 />
               </div>
               <div>
@@ -522,6 +611,41 @@ export default function ManageUsers() {
               {/* Grade Level & Course - only for Students */}
               {form.role === "Student" && (
                 <>
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-1">
+                      Link to Student <span className="text-xs">(optional)</span>
+                    </label>
+                    <Select
+                      value={form.student_id || undefined}
+                      onValueChange={handleStudentSelect}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a student without login" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableStudents.map((s) => (
+                          <SelectItem key={s.id} value={String(s.id)}>
+                            {s.name} {s.roll_no ? `(${s.roll_no})` : ""}
+                          </SelectItem>
+                        ))}
+                        {/* Include currently linked student when editing */}
+                        {editingUser?.student_id &&
+                          !availableStudents.some((s) => s.id === editingUser.student_id) && (
+                            <SelectItem
+                              key={editingUser.student_id}
+                              value={String(editingUser.student_id)}
+                            >
+                              {studentNameById(editingUser.student_id)} (current)
+                            </SelectItem>
+                          )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {form.student_id
+                        ? `Linked: ${studentNameById(Number(form.student_id))}`
+                        : "Selecting a student will pre-fill the name."}
+                    </p>
+                  </div>
                   <div>
                     <label className="block text-sm text-muted-foreground mb-1">Grade Level</label>
                     <Select
@@ -605,7 +729,7 @@ export default function ManageUsers() {
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               Are you sure you want to <span className="text-red-400 font-medium">permanently delete</span>{" "}
-              <span className="text-white font-medium">{deletingUser.name}</span> ({deletingUser.email})?
+              <span className="text-white font-medium">{deletingUser.name}</span> ({deletingUser.email || deletingUser.username || "no email"})?
               This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
