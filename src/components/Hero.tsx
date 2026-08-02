@@ -29,19 +29,70 @@ export default function Hero() {
         />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center gap-6 md:gap-8">
+      <div className="relative z-10 max-w-6xl mx-auto text-center flex flex-col items-center gap-6 md:gap-8">
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm font-medium animate-fade-in-up">
           <GraduationCap className="w-4 h-4" />
           <span>Welcome to the future of science education</span>
         </div>
 
-        {/* Main Heading */}
-        <h1 className="text-5xl md:text-7xl lg:text-7xl font-bold tracking-tighter leading-tight animate-fade-in-up-delay-1">
-          <span className="text-gradient animate-pulse-gradient">
-            Nouman Science Academy
-          </span>
-        </h1>
+        {/* Main Heading with Founder Images */}
+        <div className="flex items-center justify-center gap-3 md:gap-6 lg:gap-8 w-full animate-fade-in-up-delay-1">
+          {/* Left Image - Sir Salman Arif */}
+          <div className="flex flex-col items-center flex-shrink-0 group">
+            <div className="relative" style={{ isolation: "isolate" }}>
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl group-hover:bg-primary/30 transition-all duration-500" />
+              {/* Image with corner blur */}
+              <div className="relative w-40 h-40 md:w-56 md:h-56 lg:w-72 lg:h-72 corner-blur transition-transform duration-500 group-hover:scale-105">
+                <img
+                  src="/Salman-Arif-removebg-preview_imgupscaler.ai_General_4K.jpg"
+                  alt="Sir Salman Arif"
+                  className="w-full h-full object-cover"
+                  style={{ mixBlendMode: "multiply" }}
+                />
+              </div>
+            </div>
+            {/* Description */}
+            <div className="mt-2 md:mt-4 text-center max-w-[160px] md:max-w-[224px]">
+              <p className="text-xs md:text-sm font-semibold text-white">Sir Salman Arif</p>
+              <p className="text-[10px] md:text-xs text-primary font-medium">Founder and CEO</p>
+              <p className="hidden md:block text-[10px] text-muted-foreground leading-tight mt-1">MS chemistry From Minhaj university</p>
+              <p className="hidden md:block text-[10px] text-muted-foreground leading-tight">B ed from Punjab university</p>
+            </div>
+          </div>
+
+          {/* Academy Name */}
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter leading-tight text-center">
+            <span className="text-gradient animate-pulse-gradient">
+              Nouman Science Academy
+            </span>
+          </h1>
+
+          {/* Right Image - Dr Adnan Arif */}
+          <div className="flex flex-col items-center flex-shrink-0 group">
+            <div className="relative">
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-full bg-accent/20 blur-2xl group-hover:bg-accent/30 transition-all duration-500" />
+              {/* Image with corner blur */}
+              <div className="relative w-40 h-40 md:w-56 md:h-56 lg:w-72 lg:h-72 corner-blur transition-transform duration-500 group-hover:scale-105">
+                <img
+                  src="/Adnan-Arif-removebg-preview.png"
+                  alt="Dr Adnan Arif"
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: "top" }}
+                />
+              </div>
+            </div>
+            {/* Description */}
+            <div className="mt-2 md:mt-4 text-center max-w-[160px] md:max-w-[224px]">
+              <p className="text-xs md:text-sm font-semibold text-white">Dr Adnan Arif</p>
+              <p className="text-[10px] md:text-xs text-accent font-medium">Co-founder</p>
+              <p className="hidden md:block text-[10px] text-muted-foreground leading-tight mt-1">Master in Nutrition and Dietetics (MS)</p>
+              <p className="hidden md:block text-[10px] text-muted-foreground leading-tight">University of Management and Technology</p>
+            </div>
+          </div>
+        </div>
 
         {/* Tagline */}
         <p className="text-lg md:text-xl text-muted-foreground animate-fade-in-up-delay-2">
@@ -87,4 +138,3 @@ export default function Hero() {
     </section>
   );
 }
-

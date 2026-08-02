@@ -196,3 +196,16 @@
   color: transparent;
 }
 
+@utility corner-blur {
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 55%, transparent 100%);
+}
+
+@utility founder-card {
+  background: rgba(26, 31, 46, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+

@@ -3,58 +3,68 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const teachers = [
+const students = [
   {
-    name: "Majid Mehmood",
-    subject: "Education",
-    bio: "Educator with a strong academic background in education, committed to delivering quality learning experiences and fostering student growth.",
-    credentials: "MPhil in Education, Punjab University",
-    image: "/Majid.jpeg",
+    name: "Ahsan Sattar",
+    degree: "Doctor of Physical Therapy",
+    university: "King Edward Medical University",
+    image: "/Ahsan-Sattar.jpeg",
   },
   {
-    name: "Muhammad Zeeshan",
-    subject: "Physics",
-    bio: "Principal at Riphah International College, Township Campus. Dedicated to academic excellence and student success.",
-    credentials: "M.Phil in Physics, Riphah International University Lahore",
-    image: "/Muhammad-Zeeshan.jpeg",
+    name: "Captain Dr Asaf Ali Hashmi",
+    degree: "MBBS",
+    university: "Army Medical College",
+    image: "/Asif-Ali.png",
   },
   {
-    name: "Dr. Abdul Rehman",
-    subject: "Islamic Studies",
-    bio: "Scholar of Islamic studies committed to imparting deep religious knowledge and values to students.",
-    credentials:
-      "Ph.D. in Islamic Studies, University of Lahore; MS in Islamic Studies, University of Management and Technology",
-    image: "/Dr-AbdulRehman.jpeg",
+    name: "Aqsa Aslam",
+    degree: "BS Mathematics",
+    university: "University of Education",
+    image: "/Aqsa-Aslam.jpeg",
   },
   {
-    name: "Junaid Jabbar",
-    subject: "Law",
-    bio: "Legal professional passionate about educating the next generation of legal minds.",
-    credentials: "LLB, Punjab University",
-    image: "/Junaid-Jabbar.jpeg",
+    name: "Engr. Ali Nawaz",
+    degree: "BS Civil Engineering",
+    university: "UET Lahore",
+    image: "/Ali-Nawaz.jpeg",
   },
   {
-    name: "Dr. Arslan Asif",
-    subject: "Nutrition and Dietetics",
-    bio: "Nutrition and dietetics expert dedicated to promoting health and wellness through evidence-based dietary practices.",
-    credentials:
-      "Master in Nutrition and Dietetics (MS), University of Management and Technology",
-    image: "/Arslan-Asif.PNG",
+    name: "Dr. Adeel Ahmed",
+    degree: "Masters in Nutrition and Dietetics (MS)",
+    university: "University of Management and Technology",
+    image: "/Adeel-Ahmad.jpeg",
   },
   {
-    name: "Zunaira Aslam",
-    subject: "Physics",
-    bio: "Physics scholar passionate about unraveling the mysteries of the universe and inspiring students in scientific inquiry.",
-    credentials: "MPhil Physics, University of Education",
-    image: "/Zunaira-Aslam.jpeg",
+    name: "Ali Rizwan",
+    degree: "BS Information Engineering Technology",
+    university: "University of Lahore",
+    image: "/Ali-Rizwan.jpeg",
+  },
+  {
+    name: "Muhammad Tayyab",
+    degree: "BS Nursing",
+    university: "University of Lahore",
+    image: "/Tayyab-Maqbool.jpeg",
+  },
+  {
+    name: "Ameer Hamza",
+    degree: "Software Engineer",
+    university: "Punjab University",
+    image: "/Ameer-Hamza.jpeg",
+  },
+  {
+    name: "Mahrukh Iftikhar",
+    degree: "BS Chemistry",
+    university: "Punjab University",
+    image: "/Mahrukh-Iftikhar.jpeg",
   },
 ];
 
-export default function TeachersCarousel() {
+export default function BrilliantStudents() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  const totalSlides = Math.ceil(teachers.length / getCardsPerView());
+  const totalSlides = Math.ceil(students.length / getCardsPerView());
 
   function getCardsPerView() {
     if (typeof window === "undefined") return 3;
@@ -100,9 +110,9 @@ export default function TeachersCarousel() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Visible teachers based on current slide
+  // Visible students based on current slide
   const startIndex = currentSlide * cardsPerView;
-  const visibleTeachers = teachers.slice(startIndex, startIndex + cardsPerView);
+  const visibleStudents = students.slice(startIndex, startIndex + cardsPerView);
 
   // Pause auto-play on hover
   const handleMouseEnter = () => setIsAutoPlaying(false);
@@ -110,18 +120,18 @@ export default function TeachersCarousel() {
 
   return (
     <section
-      id="teachers"
+      id="students"
       className="relative py-20 md:py-28 px-4"
     >
       <div className="container mx-auto max-w-6xl">
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-4xl font-bold text-white mb-4">
-            Meet Our Expert Teachers
+            Our Brilliant Students
           </h2>
           <p className="text-muted-foreground text-base leading-relaxed max-w-xl mx-auto">
-            Passionate educators shaping tomorrow's scientists with dedication,
-            expertise, and inspiration.
+            Proud achievements of our students who have secured admissions in
+            top universities and are pursuing their dreams with excellence.
           </p>
         </div>
 
@@ -133,37 +143,34 @@ export default function TeachersCarousel() {
         >
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleTeachers.map((teacher, index) => (
+            {visibleStudents.map((student, index) => (
               <div
-                key={`${teacher.name}-${index}`}
+                key={`${student.name}-${index}`}
                 className="group relative bg-card/50 border border-white/10 rounded-xl overflow-hidden transition-all duration-300 hover:bg-card/80"
               >
-                {/* Teacher Image */}
-                <div className="relative w-32 h-40 md:w-36 md:h-44 mx-auto mt-6 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                {/* Student Image */}
+                <div className="relative w-28 h-28 mx-auto mt-6 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                   <img
-                    src={teacher.image}
-                    alt={teacher.name}
-                    className="w-full h-full object-cover object-top"
+                    src={student.image}
+                    alt={student.name}
+                    className="w-full h-full object-cover"
                   />
                 </div>
 
-                {/* Name & Subject (Always Visible) */}
+                {/* Name & Degree (Always Visible) */}
                 <div className="p-6 text-center">
                   <h3 className="text-lg font-semibold text-white mb-1">
-                    {teacher.name}
+                    {student.name}
                   </h3>
                   <p className="text-primary text-sm font-medium">
-                    {teacher.subject}
+                    {student.degree}
                   </p>
                 </div>
 
-                {/* Bio & Credentials (Visible on Hover) */}
+                {/* University (Visible on Hover) */}
                 <div className="px-6 pb-6 text-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-3">
-                    {teacher.bio}
-                  </p>
                   <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium">
-                    {teacher.credentials}
+                    {student.university}
                   </div>
                 </div>
               </div>

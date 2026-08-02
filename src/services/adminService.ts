@@ -48,12 +48,16 @@ export const getCourses = async (): Promise<{
   success: boolean;
   courses: CourseData[];
 }> => {
-  const response = await api.get("/courses");
-  const res = response.data;
-  if (res.success && Array.isArray(res.data)) {
-    return { success: true, courses: res.data.map(mapCourse) };
+  try {
+    const response = await api.get("/courses");
+    const res = response.data;
+    if (res.success && Array.isArray(res.data)) {
+      return { success: true, courses: res.data.map(mapCourse) };
+    }
+    return { success: false, courses: [] };
+  } catch {
+    return { success: false, courses: [] };
   }
-  return { success: false, courses: [] };
 };
 
 export const createCourse = async (data: {
@@ -121,13 +125,119 @@ export const markAttendance = async (data: {
 }): Promise<{ success: boolean; message: string; data?: { attendance_id: number }; errors?: string[] }> => {
   try {
     const response = await api.post("/attendance", data);
-    return response.data;
+    // If the API call succeeded (HTTP 200), treat it as success
+    // even if the response body doesn't have a "success" field
+    if (response.data) {
+      return {
+        success: response.data.success !== false,
+        message: response.data.message || "Attendance saved",
+        data: response.data.data,
+        errors: response.data.errors,
+      };
+    }
+    return { success: true, message: "Attendance saved" };
   } catch (error: unknown) {
     const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
     if (axiosError.response?.data) {
       return axiosError.response.data;
     }
     return { success: false, message: "Attendance endpoint not available" };
+  }
+};
+
+export const markBulkAttendance = async (data: {
+  records: Array<{
+    student_id: number;
+    course_id: number;
+    date: string;
+    status: "Present" | "Absent" | "Late" | "Excused";
+  }>;
+}): Promise<{ success: boolean; message: string; errors?: string[] }> => {
+  // Try 1: Send records wrapped in object { records: [...] }
+  try {
+    const response = await api.post("/attendance/bulk", data);
+    // If the API call succeeded (HTTP 200), treat it as success
+    if (response.data) {
+      return {
+        success: response.data.success !== false,
+        message: response.data.message || "Attendance saved successfully",
+        errors: response.data.errors,
+      };
+    }
+  } catch (error: unknown) {
+    // Capture error response from the bulk endpoint
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      const errorData = axiosError.response.data;
+      // If the backend returned structured error data, return it
+      if (errorData.errors && errorData.errors.length > 0) {
+        return {
+          success: false,
+          message: errorData.message || "Validation Failed",
+          errors: errorData.errors,
+        };
+      }
+      // If only a message, keep it for fallback
+    }
+  }
+
+  // Try 2: Send records as a plain array [...]
+  try {
+    const response = await api.post("/attendance/bulk", data.records);
+    if (response.data) {
+      return {
+        success: response.data.success !== false,
+        message: response.data.message || "Attendance saved successfully",
+        errors: response.data.errors,
+      };
+    }
+  } catch (error: unknown) {
+    // Capture error response from the bulk endpoint
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      const errorData = axiosError.response.data;
+      if (errorData.errors && errorData.errors.length > 0) {
+        return {
+          success: false,
+          message: errorData.message || "Validation Failed",
+          errors: errorData.errors,
+        };
+      }
+    }
+  }
+
+  // Try 3: Fallback to individual attendance marking
+  try {
+    const results = await Promise.all(
+      data.records.map((record) => markAttendance(record))
+    );
+    const allSuccess = results.every((r) => r.success !== false);
+    const errorMessages = results
+      .filter((r) => r.success === false)
+      .map((r) => r.message);
+    const allErrors = results
+      .filter((r) => r.success === false && r.errors && r.errors.length > 0)
+      .flatMap((r) => r.errors || []);
+    return {
+      success: allSuccess,
+      message: allSuccess
+        ? "All attendance records saved successfully"
+        : errorMessages.length > 0
+          ? errorMessages.join("; ")
+          : "Some attendance records failed to save",
+      errors: allErrors.length > 0 ? allErrors : (errorMessages.length > 0 ? errorMessages : undefined),
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
+    if (axiosError.response?.data) {
+      const errorData = axiosError.response.data;
+      return {
+        success: false,
+        message: errorData.message || "Failed to save attendance",
+        errors: errorData.errors,
+      };
+    }
+    return { success: false, message: "Failed to save attendance. Please try again." };
   }
 };
 

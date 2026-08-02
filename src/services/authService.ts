@@ -1,15 +1,18 @@
 import api from "./api";
 
 export interface LoginRequest {
-  email: string;
+  email: string; // Can be an email OR a username — backend handles both
   password: string;
 }
 
 export interface AuthUser {
   userId: number;
   name: string;
-  email: string;
+  email: string | null;
+  username?: string | null;
   role: "Admin" | "Teacher" | "Student";
+  isActive: boolean;
+  student_id?: number | null;
 }
 
 export interface LoginResponse {

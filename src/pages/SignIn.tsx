@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, Loader2, AlertCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ export default function SignIn() {
   const navigate = useNavigate();
   const { user, isLoading, error } = useAppSelector((state) => state.auth);
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -38,7 +38,7 @@ export default function SignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(clearError());
-    dispatch(loginUser({ email, password }));
+    dispatch(loginUser({ email: identifier, password }));
   };
 
   return (
@@ -100,25 +100,25 @@ export default function SignIn() {
           <div className="relative mb-6">
             <Separator className="bg-white/10" />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-xs text-muted-foreground">
-              OR CONTINUE WITH EMAIL
+              OR CONTINUE WITH EMAIL / USERNAME
             </span>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
+            {/* Email or Username */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm text-muted-foreground">
-                Email
+              <Label htmlFor="identifier" className="text-sm text-muted-foreground">
+                Email or Username
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier"
+                  type="text"
+                  placeholder="Enter email or username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="pl-10 h-11 bg-white/5 border-white/10 focus:border-primary/50 text-white placeholder:text-muted-foreground/50 transition-all duration-300"
                   required
                 />
@@ -205,7 +205,7 @@ export default function SignIn() {
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground mt-8">
-            Don&apos;t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               to="/signup"
               className="text-primary hover:text-primary/80 font-medium transition-colors duration-300"
@@ -223,4 +223,3 @@ export default function SignIn() {
     </div>
   );
 }
-
