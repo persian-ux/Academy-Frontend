@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCog,
+  Wallet,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -25,6 +26,7 @@ const sidebarItems = [
   { label: "Class Marks", icon: <GraduationCap className="w-5 h-5" />, path: "/admin/class-marks" },
   { label: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/reports" },
   { label: "Monthly Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/monthly-reports" },
+  { label: "Fees", icon: <Wallet className="w-5 h-5" />, path: "/admin/fees" },
 ];
 
 export default function AdminLayout() {

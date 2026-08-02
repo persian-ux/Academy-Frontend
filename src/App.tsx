@@ -24,7 +24,9 @@ import UploadMarks from "@/pages/admin/UploadMarks";
 import ClassMarks from "@/pages/admin/ClassMarks";
 import Reports from "@/pages/admin/Reports";
 import MonthlyReports from "@/pages/admin/MonthlyReports";
+import ManageFees from "@/pages/admin/ManageFees";
 import MyMarks from "@/pages/student/MyMarks";
+import MyFees from "@/pages/student/MyFees";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import PublicRoute from "@/components/auth/PublicRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
@@ -87,12 +89,21 @@ function App() {
             <Route path="class-marks" element={<ClassMarks />} />
             <Route path="reports" element={<Reports />} />
             <Route path="monthly-reports" element={<MonthlyReports />} />
+            <Route path="fees" element={<ManageFees />} />
           </Route>
           <Route
             path="/my-marks"
             element={
               <ProtectedRoute>
                 <MyMarks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-fees"
+            element={
+              <ProtectedRoute>
+                <MyFees />
               </ProtectedRoute>
             }
           />
