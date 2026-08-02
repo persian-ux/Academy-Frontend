@@ -21,10 +21,16 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Navigate to admin after successful login
+  // Navigate to the appropriate dashboard after successful login
   useEffect(() => {
     if (user) {
-      navigate("/admin");
+      if (user.role === "Student") {
+        navigate("/dashboard");
+      } else if (user.role === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     }
   }, [user, navigate]);
 

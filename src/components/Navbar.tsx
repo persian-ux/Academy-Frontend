@@ -23,6 +23,7 @@ export default function Navbar() {
   // Check if we're on a dashboard or admin page
   const isDashboardPage =
     location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/my-marks") ||
     location.pathname.startsWith("/my-fees");
 
@@ -159,6 +160,12 @@ export default function Navbar() {
                 )}
                 {user.role === "Student" && (
                   <>
+                    <Link
+                      to="/dashboard"
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium"
+                    >
+                      My Dashboard
+                    </Link>
                     <Link
                       to="/my-marks"
                       className="text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium"
@@ -307,6 +314,13 @@ export default function Navbar() {
                 )}
                 {user.role === "Student" && (
                   <>
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                    >
+                      My Dashboard
+                    </Link>
                     <Link
                       to="/my-marks"
                       onClick={() => setIsOpen(false)}

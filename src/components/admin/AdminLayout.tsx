@@ -40,7 +40,6 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen pt-20 flex">
-      {/* Sidebar */}
       <aside
         className={`${
           collapsed ? "w-16" : "w-64"
@@ -84,7 +83,6 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <Outlet />
       </main>
