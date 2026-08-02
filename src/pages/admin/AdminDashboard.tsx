@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, BookOpen, ClipboardCheck, BarChart3, CalendarRange, Loader2 } from "lucide-react";
+import { Users, BookOpen, ClipboardCheck, BarChart3, CalendarRange, Loader2, UserPlus } from "lucide-react";
 import { getDashboardStats, type DashboardStats } from "@/services/adminService";
 
 interface StatCard {
@@ -119,30 +119,35 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <QuickActionCard
             title="Manage Users"
             description="Create, edit, or remove users"
-            icon={<Users className="w-5 h-5" />}
+            icon={<UserPlus className="w-5 h-5" />}
             color="text-blue-400"
-            onClick={() => window.location.hash = "#users"}
+            onClick={() => {
+              window.location.hash = "#users";
+            }}
           />
           <QuickActionCard
             title="Manage Sections"
             description="Add or update sections and classes"
             icon={<BookOpen className="w-5 h-5" />}
             color="text-orange-400"
-            onClick={() => window.location.hash = "#courses"}
+            onClick={() => {
+              window.location.hash = "#courses";
+            }}
           />
           <QuickActionCard
             title="Take Attendance"
             description="Mark attendance for any section"
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="text-green-400"
-            onClick={() => window.location.hash = "#attendance"}
+            onClick={() => {
+              window.location.hash = "#attendance";
+            }}
           />
         </div>
       </div>

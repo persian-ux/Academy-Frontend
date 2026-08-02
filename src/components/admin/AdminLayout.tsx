@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCog,
+  Wallet,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -25,6 +26,7 @@ const sidebarItems = [
   { label: "Class Marks", icon: <GraduationCap className="w-5 h-5" />, path: "/admin/class-marks" },
   { label: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/reports" },
   { label: "Monthly Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/monthly-reports" },
+  { label: "Fees", icon: <Wallet className="w-5 h-5" />, path: "/admin/fees" },
 ];
 
 export default function AdminLayout() {
@@ -38,7 +40,6 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen pt-20 flex">
-      {/* Sidebar */}
       <aside
         className={`${
           collapsed ? "w-16" : "w-64"
@@ -82,7 +83,6 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <Outlet />
       </main>

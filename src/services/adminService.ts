@@ -119,7 +119,7 @@ export interface MonthlyReportData {
 
 export const markAttendance = async (data: {
   student_id: number;
-  course_id: number;
+  course_id?: number;
   date: string;
   status: "Present" | "Absent" | "Late" | "Excused";
 }): Promise<{ success: boolean; message: string; data?: { attendance_id: number }; errors?: string[] }> => {
@@ -148,7 +148,7 @@ export const markAttendance = async (data: {
 export const markBulkAttendance = async (data: {
   records: Array<{
     student_id: number;
-    course_id: number;
+    course_id?: number;
     date: string;
     status: "Present" | "Absent" | "Late" | "Excused";
   }>;

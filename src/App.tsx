@@ -24,10 +24,13 @@ import UploadMarks from "@/pages/admin/UploadMarks";
 import ClassMarks from "@/pages/admin/ClassMarks";
 import Reports from "@/pages/admin/Reports";
 import MonthlyReports from "@/pages/admin/MonthlyReports";
+import ManageFees from "@/pages/admin/ManageFees";
+import StudentDashboard from "@/pages/student/StudentDashboard";
 import MyMarks from "@/pages/student/MyMarks";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import MyFees from "@/pages/student/MyFees";
 import PublicRoute from "@/components/auth/PublicRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
+import StudentRoute from "@/components/auth/StudentRoute";
 
 function HomePage() {
   return (
@@ -87,13 +90,30 @@ function App() {
             <Route path="class-marks" element={<ClassMarks />} />
             <Route path="reports" element={<Reports />} />
             <Route path="monthly-reports" element={<MonthlyReports />} />
+            <Route path="fees" element={<ManageFees />} />
           </Route>
+          <Route
+            path="/dashboard"
+            element={
+              <StudentRoute>
+                <StudentDashboard />
+              </StudentRoute>
+            }
+          />
           <Route
             path="/my-marks"
             element={
-              <ProtectedRoute>
+              <StudentRoute>
                 <MyMarks />
-              </ProtectedRoute>
+              </StudentRoute>
+            }
+          />
+          <Route
+            path="/my-fees"
+            element={
+              <StudentRoute>
+                <MyFees />
+              </StudentRoute>
             }
           />
         </Routes>

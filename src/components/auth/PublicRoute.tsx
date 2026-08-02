@@ -18,9 +18,17 @@ export default function PublicRoute({ children }: PublicRouteProps) {
     );
   }
 
-  // Redirect to admin if already authenticated
+  // Redirect authenticated users to the correct area for their role
   if (user) {
-    return <Navigate to="/admin" replace />;
+    if (user.role === "Student") {
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    if (user.role === "Admin") {
+      return <Navigate to="/admin" replace />;
+    }
+
+    return <Navigate to="/" replace />;
   }
 
   // Render children or nested routes

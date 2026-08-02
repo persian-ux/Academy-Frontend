@@ -21,7 +21,11 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   // Check if we're on a dashboard or admin page
-  const isDashboardPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/my-marks");
+  const isDashboardPage =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/dashboard") ||
+    location.pathname.startsWith("/my-marks") ||
+    location.pathname.startsWith("/my-fees");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -154,6 +158,28 @@ export default function Navbar() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
+                {user.role === "Student" && (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium"
+                    >
+                      My Dashboard
+                    </Link>
+                    <Link
+                      to="/my-marks"
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium"
+                    >
+                      My Marks
+                    </Link>
+                    <Link
+                      to="/my-fees"
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-sm font-medium"
+                    >
+                      My Fees
+                    </Link>
+                  </>
+                )}
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 text-muted-foreground hover:text-white transition-colors duration-300 text-sm"
@@ -285,6 +311,31 @@ export default function Navbar() {
                     <Shield className="w-5 h-5" />
                     Admin Panel
                   </Link>
+                )}
+                {user.role === "Student" && (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                    >
+                      My Dashboard
+                    </Link>
+                    <Link
+                      to="/my-marks"
+                      onClick={() => setIsOpen(false)}
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                    >
+                      My Marks
+                    </Link>
+                    <Link
+                      to="/my-fees"
+                      onClick={() => setIsOpen(false)}
+                      className="text-muted-foreground hover:text-white transition-colors duration-300 text-lg font-medium"
+                    >
+                      My Fees
+                    </Link>
+                  </>
                 )}
                 <button
                   onClick={handleLogout}
