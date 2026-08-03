@@ -118,6 +118,11 @@ export default function ManageAttendance() {
   const [bulkError, setBulkError] = useState("");
   const [bulkErrors, setBulkErrors] = useState<string[]>([]);
 
+  // Track students who already have attendance marked for the selected date
+  const [alreadyMarkedStudents, setAlreadyMarkedStudents] = useState<Set<number>>(new Set());
+  const [existingAttendanceMap, setExistingAttendanceMap] = useState<Record<number, AttendanceStatus>>({});
+  const [checkingExisting, setCheckingExisting] = useState(false);
+
   // Tab 2 - Attendance History
   const [historyGrade, setHistoryGrade] = useState<GradeLevel | "">("");
   const [historySection, setHistorySection] = useState<string>("");
@@ -184,6 +189,54 @@ export default function ManageAttendance() {
     setBulkErrors([]);
   };
 
+  // Normalize a date string to YYYY-MM-DD for reliable comparison
+  const normalizeDate = (dateStr: string): string => {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) {
+      return dateStr.slice(0, 10);
+    }
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  // Check which students already have attendance marked for the given date
+  const checkExistingAttendance = async (students: AttendanceStudent[], date: string) => {
+    const marked = new Set<number>();
+    const statusMap: Record<number, AttendanceStatus> = {};
+    await Promise.all(
+      students.map(async (student) => {
+        const res = await getAttendanceHistory(student.student_id);
+        if (res.success && res.data) {
+          const existing = res.data.find((record) => normalizeDate(record.date) === date);
+          if (existing) {
+            marked.add(student.student_id);
+            statusMap[student.student_id] = existing.status;
+          }
+        }
+      })
+    );
+    return { marked, statusMap };
+  };
+
+  // Check existing attendance for the currently loaded students on the given date
+  const refreshExistingAttendance = async (students: AttendanceStudent[], date: string) => {
+    if (!students.length || !date) {
+      setAlreadyMarkedStudents(new Set());
+      setExistingAttendanceMap({});
+      return;
+    }
+    setCheckingExisting(true);
+    try {
+      const { marked, statusMap } = await checkExistingAttendance(students, date);
+      setAlreadyMarkedStudents(marked);
+      setExistingAttendanceMap(statusMap);
+    } catch {
+      setAlreadyMarkedStudents(new Set());
+      setExistingAttendanceMap({});
+    } finally {
+      setCheckingExisting(false);
+    }
+  };
+
   const loadMarkStudents = async (grade: GradeLevel, section: string) => {
     const courseId = courses.find((course) => course.title === section)?.courseId ?? null;
 
@@ -191,6 +244,8 @@ export default function ManageAttendance() {
     if (!courseId) {
       setMarkStudents([]);
       initAttendanceRecordsForStudents([]);
+      setAlreadyMarkedStudents(new Set());
+      setExistingAttendanceMap({});
       return;
     }
 
@@ -201,6 +256,8 @@ export default function ManageAttendance() {
       );
       setMarkStudents(sectionStudents);
       initAttendanceRecordsForStudents(sectionStudents);
+      // Check if any of these students already have attendance marked for the selected date
+      void refreshExistingAttendance(sectionStudents, markDate);
     } else {
       setMarkStudents([]);
       setBulkError(response.message || "Failed to load students for this course.");
@@ -281,6 +338,17 @@ export default function ManageAttendance() {
       return;
     }
 
+    // Prevent re-marking attendance for students who already have it marked on this date
+    const alreadyMarked = students.filter((s) => alreadyMarkedStudents.has(s.student_id));
+    if (alreadyMarked.length > 0) {
+      const markedNames = alreadyMarked.map((s) => s.name).join(", ");
+      setBulkError(
+        `Attendance is already marked for the following student(s) on ${markDate}: ${markedNames}. ` +
+        "Please select a different date or use the History tab to view/edit existing records."
+      );
+      return;
+    }
+
     setBulkSubmitting(true);
     setBulkError("");
     setBulkSuccess("");
@@ -299,6 +367,9 @@ export default function ManageAttendance() {
         setBulkSuccess(
           `Attendance saved successfully for ${records.length} student(s) in ${markGrade}${markSection ? ` - ${markSection}` : ""} on ${markDate}`
         );
+        // Clear the already-marked tracking after successful save
+        setAlreadyMarkedStudents(new Set());
+        setExistingAttendanceMap({});
       } else {
         if (res.errors && res.errors.length > 0) {
           setBulkErrors(res.errors);
@@ -416,6 +487,8 @@ export default function ManageAttendance() {
                       setBulkSuccess("");
                       setBulkError("");
                       setBulkErrors([]);
+                      setAlreadyMarkedStudents(new Set());
+                      setExistingAttendanceMap({});
                     }}
                     className={`px-5 py-2.5 rounded-lg text-sm font-medium border transition-all ${
                       markGrade === grade
@@ -454,6 +527,8 @@ export default function ManageAttendance() {
                             setBulkSuccess("");
                             setBulkError("");
                             setBulkErrors([]);
+                            setAlreadyMarkedStudents(new Set());
+                            setExistingAttendanceMap({});
                           }
                         }}
                       >
@@ -494,11 +569,33 @@ export default function ManageAttendance() {
                         setBulkSuccess("");
                         setBulkError("");
                         setBulkErrors([]);
+                        // Re-check existing attendance for the new date
+                        if (markStudents.length > 0) {
+                          void refreshExistingAttendance(markStudents, e.target.value);
+                        }
                       }}
                       className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
+
+                {/* Warning banner: students already have attendance marked for the selected date */}
+                {alreadyMarkedStudents.size > 0 && (
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 mb-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-1 rounded-full bg-amber-500/20">
+                        <AlertCircle className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="text-amber-400 font-medium text-sm">Attendance Already Marked</p>
+                        <p className="text-amber-300/80 text-sm mt-0.5">
+                          {alreadyMarkedStudents.size} student(s) already have attendance marked for {markDate}.
+                          These students will be skipped when saving. Select a different date to mark them.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Student List with Status */}
                 {markSection ? (
@@ -507,6 +604,9 @@ export default function ManageAttendance() {
                       <p className="text-sm text-muted-foreground">
                         <Users className="w-3.5 h-3.5 inline mr-1" />
                         {getMarkStudents().length} student(s) in {markGrade} - {markSection}
+                        {checkingExisting && (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin inline ml-2 text-muted-foreground" />
+                        )}
                       </p>
                     </div>
 
@@ -538,16 +638,27 @@ export default function ManageAttendance() {
                             <tbody>
                               {getMarkStudents().map((student) => {
                                 const currentStatus = attendanceRecords[student.student_id] || "Present";
+                                const isAlreadyMarked = alreadyMarkedStudents.has(student.student_id);
+                                const existingStatus = existingAttendanceMap[student.student_id];
                                 return (
                                   <tr
                                     key={student.student_id}
-                                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                                    className={`border-b border-white/5 transition-colors ${
+                                      isAlreadyMarked ? "bg-amber-500/5" : "hover:bg-white/5"
+                                    }`}
                                   >
                                     {/* Left: Student Name */}
                                     <td className="p-3">
-                                      <span className="text-white text-sm font-medium">
-                                        {student.name}
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-white text-sm font-medium">
+                                          {student.name}
+                                        </span>
+                                        {isAlreadyMarked && (
+                                          <span className="text-xs text-amber-400 bg-amber-500/10 px-1.5 py-0.25 rounded">
+                                            Already marked
+                                          </span>
+                                        )}
+                                      </div>
                                     </td>
 
                                     {/* Middle: Class / Section */}
@@ -556,6 +667,11 @@ export default function ManageAttendance() {
                                         {student.grade_level || markGrade}
                                         {student.section ? ` - ${student.section}` : ""}
                                       </span>
+                                      {isAlreadyMarked && existingStatus && (
+                                        <div className="mt-1">
+                                          <StatusBadge status={existingStatus} />
+                                        </div>
+                                      )}
                                     </td>
 
                                     {/* Status checkboxes - only one can be checked per row */}
@@ -576,6 +692,7 @@ export default function ManageAttendance() {
                                                 setBulkErrors([]);
                                               }}
                                               size="sm"
+                                              disabled={isAlreadyMarked}
                                             />
                                           </div>
                                         </td>
@@ -592,13 +709,19 @@ export default function ManageAttendance() {
                         <div className="flex items-center gap-4">
                           <button
                             onClick={handleBulkMarkAttendance}
-                            disabled={bulkSubmitting}
+                            disabled={bulkSubmitting || alreadyMarkedStudents.size === getMarkStudents().length}
                             className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {bulkSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                             <Save className="w-4 h-4" />
                             Save Attendance
                           </button>
+                          {alreadyMarkedStudents.size > 0 && alreadyMarkedStudents.size < getMarkStudents().length && (
+                            <p className="text-xs text-muted-foreground">
+                              {getMarkStudents().length - alreadyMarkedStudents.size} student(s) will be marked;{" "}
+                              {alreadyMarkedStudents.size} already have attendance for this date.
+                            </p>
+                          )}
                         </div>
                       </div>
                     ) : (
