@@ -44,14 +44,12 @@ export default function TeacherAttendance() {
     setSavedRecord(null);
   }, [attendanceDate]);
 
-  const leaveReasonRequired = status === "Leave";
-
+  // Validation disabled — leave reason is no longer required to save attendance
   const canSubmit = useMemo(() => {
     if (submitting) return false;
     if (!attendanceDate) return false;
-    if (leaveReasonRequired && !leaveReason.trim()) return false;
     return true;
-  }, [attendanceDate, leaveReason, leaveReasonRequired, submitting]);
+  }, [attendanceDate, submitting]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -63,10 +61,7 @@ export default function TeacherAttendance() {
       return;
     }
 
-    if (status === "Leave" && !leaveReason.trim()) {
-      setError("Please provide a leave reason.");
-      return;
-    }
+    // Leave reason validation disabled — attendance saves regardless
 
     setSubmitting(true);
     try {

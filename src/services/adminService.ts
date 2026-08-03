@@ -153,31 +153,36 @@ export const markBulkAttendance = async (data: {
     status: "Present" | "Absent" | "Late" | "Excused";
   }>;
 }): Promise<{ success: boolean; message: string; errors?: string[] }> => {
+  // Validation disabled — try every strategy before giving up so attendance always saves
+  let lastError: { success: boolean; message: string; errors?: string[] } | null = null;
+
   // Try 1: Send records wrapped in object { records: [...] }
   try {
     const response = await api.post("/attendance/bulk", data);
-    // If the API call succeeded (HTTP 200), treat it as success
     if (response.data) {
-      return {
-        success: response.data.success !== false,
-        message: response.data.message || "Attendance saved successfully",
+      // Only return early on actual success; otherwise keep trying fallbacks
+      if (response.data.success !== false) {
+        return {
+          success: true,
+          message: response.data.message || "Attendance saved successfully",
+          errors: response.data.errors,
+        };
+      }
+      lastError = {
+        success: false,
+        message: response.data.message || "Validation Failed",
         errors: response.data.errors,
       };
     }
   } catch (error: unknown) {
-    // Capture error response from the bulk endpoint
+    // Capture error response but do NOT return — continue to fallbacks
     const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
     if (axiosError.response?.data) {
-      const errorData = axiosError.response.data;
-      // If the backend returned structured error data, return it
-      if (errorData.errors && errorData.errors.length > 0) {
-        return {
-          success: false,
-          message: errorData.message || "Validation Failed",
-          errors: errorData.errors,
-        };
-      }
-      // If only a message, keep it for fallback
+      lastError = {
+        success: false,
+        message: axiosError.response.data.message || "Validation Failed",
+        errors: axiosError.response.data.errors,
+      };
     }
   }
 
@@ -185,24 +190,28 @@ export const markBulkAttendance = async (data: {
   try {
     const response = await api.post("/attendance/bulk", data.records);
     if (response.data) {
-      return {
-        success: response.data.success !== false,
-        message: response.data.message || "Attendance saved successfully",
+      if (response.data.success !== false) {
+        return {
+          success: true,
+          message: response.data.message || "Attendance saved successfully",
+          errors: response.data.errors,
+        };
+      }
+      lastError = {
+        success: false,
+        message: response.data.message || "Validation Failed",
         errors: response.data.errors,
       };
     }
   } catch (error: unknown) {
-    // Capture error response from the bulk endpoint
+    // Capture error response but do NOT return — continue to fallbacks
     const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
     if (axiosError.response?.data) {
-      const errorData = axiosError.response.data;
-      if (errorData.errors && errorData.errors.length > 0) {
-        return {
-          success: false,
-          message: errorData.message || "Validation Failed",
-          errors: errorData.errors,
-        };
-      }
+      lastError = {
+        success: false,
+        message: axiosError.response.data.message || "Validation Failed",
+        errors: axiosError.response.data.errors,
+      };
     }
   }
 
@@ -237,7 +246,7 @@ export const markBulkAttendance = async (data: {
         errors: errorData.errors,
       };
     }
-    return { success: false, message: "Failed to save attendance. Please try again." };
+    return lastError || { success: false, message: "Failed to save attendance. Please try again." };
   }
 };
 

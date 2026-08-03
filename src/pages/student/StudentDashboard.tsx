@@ -15,6 +15,7 @@ import {
   Trophy,
   Banknote,
   User,
+  Download,
 } from "lucide-react";
 import { getMyFees } from "@/services/feeService";
 import { getMyMarks } from "@/services/markService";
@@ -25,13 +26,7 @@ import type { AttendanceRecord, MonthlyReportData } from "@/services/adminServic
 import { useAppSelector } from "@/hooks/useAppStore";
 import StatusBadge from "@/components/fees/StatusBadge";
 import FeeSummaryCards from "@/components/fees/FeeSummaryCards";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -104,6 +99,11 @@ function getPercentageBg(percentage: number) {
   if (percentage >= 80) return "bg-green-500/10 border-green-500/30";
   if (percentage >= 60) return "bg-yellow-500/10 border-yellow-500/30";
   return "bg-red-500/10 border-red-500/30";
+}
+
+function escapeCsvValue(value: string | number | null | undefined) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
 }
 
 export default function StudentDashboard() {
@@ -275,6 +275,39 @@ export default function StudentDashboard() {
   const [activeSection, setActiveSection] = useState<"fees" | "attendance" | "reports">("fees");
 
   const isRecentUnpaid = (fees?.summary.unpaid_fees ?? 0) > 0;
+
+  const handleExportAttendanceCsv = () => {
+    if (!monthlyReport) return;
+
+    const headers = ["Date", "Section", "Status"];
+    const rows = monthlyReport.details.map((record) => [record.date, record.course_name, record.status]);
+    const summaryRows = [
+      ["Student", monthlyReport.student_name],
+      ["Month", `${monthlyReport.month} ${monthlyReport.year}`],
+      ["Present", String(monthlyReport.summary.present)],
+      ["Absent", String(monthlyReport.summary.absent)],
+      ["Late", String(monthlyReport.summary.late)],
+      ["Excused", String(monthlyReport.summary.excused)],
+      ["Total", String(monthlyReport.summary.total)],
+      [],
+      headers,
+      ...rows,
+    ];
+
+    const csv = summaryRows
+      .map((row) => row.map((cell) => escapeCsvValue(cell ?? "")).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `student-attendance-${reportYear}-${String(reportMonth).padStart(2, "0")}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen pt-20 px-4 pb-8 md:px-8 md:pb-10">
@@ -515,7 +548,7 @@ export default function StudentDashboard() {
                         <BarChart3 className="w-5 h-5 text-primary" />
                         Monthly Attendance Report
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Select
                           value={String(reportMonth)}
                           onValueChange={(value) => setReportMonth(Number(value))}
@@ -546,6 +579,15 @@ export default function StudentDashboard() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <button
+                          type="button"
+                          onClick={handleExportAttendanceCsv}
+                          disabled={!monthlyReport || monthlyReport.details.length === 0}
+                          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Download className="w-4 h-4" />
+                          Export CSV
+                        </button>
                       </div>
                     </div>
 
