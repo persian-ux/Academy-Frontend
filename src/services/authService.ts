@@ -60,6 +60,11 @@ export const persistAuth = (token: string, user: AuthUser): void => {
   localStorage.setItem("auth_user", JSON.stringify(user));
 };
 
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 /**
  * Clear auth data from localStorage
  */

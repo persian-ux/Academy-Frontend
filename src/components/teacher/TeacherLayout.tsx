@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FileText,
   BarChart3,
+  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -14,6 +15,7 @@ import { logout } from "@/store/slices/authSlice";
 
 const sidebarItems = [
   { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, path: "/teacher" },
+  { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/teacher/attendance" },
   { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/teacher/tests" },
   { label: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/teacher/reports" },
 ];
@@ -65,7 +67,7 @@ export default function TeacherLayout() {
               }`}
               title={collapsed ? item.label : undefined}
             >
-              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="shrink-0">{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </Link>
           ))}
@@ -78,7 +80,7 @@ export default function TeacherLayout() {
       </main>
 
       {/* Top bar overlay for teacher name + logout — fixed at top right */}
-      <div className="fixed top-0 right-0 z-40 flex items-center gap-2 bg-black/30 backdrop-blur-sm border-l border-white/10 border-t border-white/10 px-3 py-2 rounded-bl-xl">
+      <div className="fixed top-0 right-0 z-40 flex items-center gap-2 bg-black/30 backdrop-blur-sm border-l border-t border-white/10 px-3 py-2 rounded-bl-xl">
         <User className="w-4 h-4 text-muted-foreground" />
         <span className="text-sm text-white font-medium hidden sm:inline">
           {user?.name ?? "Teacher"}

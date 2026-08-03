@@ -34,10 +34,13 @@ import StudentRoute from "@/components/auth/StudentRoute";
 import TeacherRoute from "@/components/auth/TeacherRoute";
 import TeacherLayout from "@/components/teacher/TeacherLayout";
 import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
+import TeacherAttendance from "@/pages/teacher/TeacherAttendance";
 import TeacherTests from "@/pages/teacher/TeacherTests";
 import TeacherTestForm from "@/pages/teacher/TeacherTestForm";
 import TeacherReports from "@/pages/teacher/TeacherReports";
 import TeacherUploadMarks from "@/pages/teacher/TeacherUploadMarks";
+import AccessDenied from "@/pages/AccessDenied";
+import TeacherAttendanceDashboard from "@/pages/admin/TeacherAttendanceDashboard";
 
 function HomePage() {
   return (
@@ -75,6 +78,7 @@ function App() {
               </PublicRoute>
             }
           />
+          <Route path="/access-denied" element={<AccessDenied />} />
           <Route
             path="/admin"
             element={
@@ -92,6 +96,7 @@ function App() {
             <Route path="students/:id/create-login" element={<CreateStudentLogin />} />
             <Route path="courses" element={<ManageSections />} />
             <Route path="attendance" element={<ManageAttendance />} />
+            <Route path="teacher-attendance" element={<TeacherAttendanceDashboard />} />
             <Route path="tests" element={<ManageTests />} />
             <Route path="upload-marks" element={<UploadMarks />} />
             <Route path="class-marks" element={<ClassMarks />} />
@@ -133,6 +138,7 @@ function App() {
             }
           >
             <Route index element={<TeacherDashboard />} />
+            <Route path="attendance" element={<TeacherAttendance />} />
             <Route path="tests" element={<TeacherTests />} />
             <Route path="tests/new" element={<TeacherTestForm />} />
             <Route path="tests/:id/edit" element={<TeacherTestForm />} />

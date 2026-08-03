@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthHeaders } from "./authService";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -12,9 +13,10 @@ const api = axios.create({
 // Attach JWT token to every request if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const authHeaders = getAuthHeaders();
+    if (Object.keys(authHeaders).length > 0) {
+      const headers = config.headers as Record<string, string | undefined>;
+      headers.Authorization = authHeaders.Authorization;
     }
     return config;
   },
@@ -28,10 +30,13 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
-      // Optionally redirect to sign-in
       if (window.location.pathname !== "/signin") {
         window.location.href = "/signin";
       }
+    }
+
+    if (error.response?.status === 403 && window.location.pathname !== "/access-denied") {
+      window.location.href = "/access-denied";
     }
     return Promise.reject(error);
   }

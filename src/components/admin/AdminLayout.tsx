@@ -21,6 +21,7 @@ const sidebarItems = [
   { label: "Students", icon: <UserCog className="w-5 h-5" />, path: "/admin/students" },
   { label: "Sections", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
   { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/attendance" },
+  { label: "Teacher Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/teacher-attendance" },
   { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/admin/tests" },
   { label: "Upload Marks", icon: <Upload className="w-5 h-5" />, path: "/admin/upload-marks" },
   { label: "Class Marks", icon: <GraduationCap className="w-5 h-5" />, path: "/admin/class-marks" },
@@ -66,7 +67,7 @@ export default function AdminLayout() {
               }`}
               title={collapsed ? item.label : undefined}
             >
-              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="shrink-0">{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </Link>
           ))}
