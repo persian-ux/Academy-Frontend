@@ -25,7 +25,8 @@ export default function Navbar() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/my-marks") ||
-    location.pathname.startsWith("/my-fees");
+    location.pathname.startsWith("/my-fees") ||
+    location.pathname.startsWith("/teacher");
 
   useEffect(() => {
     const handleScroll = () => {

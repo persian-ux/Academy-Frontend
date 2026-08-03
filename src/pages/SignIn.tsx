@@ -28,6 +28,8 @@ export default function SignIn() {
         navigate("/dashboard");
       } else if (user.role === "Admin") {
         navigate("/admin");
+      } else if (user.role === "Teacher") {
+        navigate("/teacher");
       } else {
         navigate("/");
       }

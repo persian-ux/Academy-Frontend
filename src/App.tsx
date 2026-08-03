@@ -31,6 +31,13 @@ import MyFees from "@/pages/student/MyFees";
 import PublicRoute from "@/components/auth/PublicRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
 import StudentRoute from "@/components/auth/StudentRoute";
+import TeacherRoute from "@/components/auth/TeacherRoute";
+import TeacherLayout from "@/components/teacher/TeacherLayout";
+import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
+import TeacherTests from "@/pages/teacher/TeacherTests";
+import TeacherTestForm from "@/pages/teacher/TeacherTestForm";
+import TeacherReports from "@/pages/teacher/TeacherReports";
+import TeacherUploadMarks from "@/pages/teacher/TeacherUploadMarks";
 
 function HomePage() {
   return (
@@ -116,6 +123,22 @@ function App() {
               </StudentRoute>
             }
           />
+          {/* Teacher Dashboard Routes */}
+          <Route
+            path="/teacher"
+            element={
+              <TeacherRoute>
+                <TeacherLayout />
+              </TeacherRoute>
+            }
+          >
+            <Route index element={<TeacherDashboard />} />
+            <Route path="tests" element={<TeacherTests />} />
+            <Route path="tests/new" element={<TeacherTestForm />} />
+            <Route path="tests/:id/edit" element={<TeacherTestForm />} />
+            <Route path="reports" element={<TeacherReports />} />
+            <Route path="reports/upload" element={<TeacherUploadMarks />} />
+          </Route>
         </Routes>
       </div>
     </Provider>

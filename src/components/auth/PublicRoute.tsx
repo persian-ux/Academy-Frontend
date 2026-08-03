@@ -24,6 +24,10 @@ export default function PublicRoute({ children }: PublicRouteProps) {
       return <Navigate to="/dashboard" replace />;
     }
 
+    if (user.role === "Teacher") {
+      return <Navigate to="/teacher" replace />;
+    }
+
     if (user.role === "Admin") {
       return <Navigate to="/admin" replace />;
     }

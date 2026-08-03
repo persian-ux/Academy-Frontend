@@ -8,7 +8,7 @@ import {
   updateTest as updateTestApi,
   deleteTest as deleteTestApi,
 } from "@/services/testService";
-import type { Test, CreateTestPayload } from "@/types/test";
+import type { Test, CreateTestPayload, GradeLevel } from "@/types/test";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -25,7 +25,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-const GRADES = ["8th", "9th", "10th", "11th", "12th"];
+const GRADES: GradeLevel[] = ["8th", "9th", "10th", "11th", "12th"];
 const SUBJECTS = ["Science", "Mathematics", "English", "Urdu", "Physics", "Chemistry", "Biology", "Computer Science", "Islamiat", "Pak Studies"];
 const STATUSES: Test["status"][] = ["Scheduled", "Ongoing", "Completed", "Cancelled"];
 
@@ -82,7 +82,10 @@ export default function ManageTests() {
   };
 
   useEffect(() => {
-    loadTests();
+    const load = async () => {
+      await loadTests();
+    };
+    load();
   }, [gradeFilter]);
 
   const openCreate = () => {
@@ -395,7 +398,7 @@ export default function ManageTests() {
                   <label className="block text-sm text-muted-foreground mb-1">Grade</label>
                   <Select
                     value={form.grade}
-                    onValueChange={(value) => setForm({ ...form, grade: value })}
+                    onValueChange={(value) => setForm({ ...form, grade: value as GradeLevel })}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
