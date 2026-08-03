@@ -19,11 +19,14 @@ import {
   markBulkAttendance,
   getAttendanceHistory,
   getMonthlyAttendanceReport,
+  getAttendanceStudents,
+  getCourses,
   type AttendanceRecord,
+  type AttendanceStudent,
+  type CourseData,
   type MonthlyReportData,
 } from "@/services/adminService";
-import { userService } from "@/services/userService";
-import type { User, GradeLevel } from "@/types/user";
+import type { GradeLevel } from "@/types/user";
 import { Checkbox } from "@/components/Checkbox";
 import {
   Select,
@@ -35,6 +38,7 @@ import {
 
 type TabId = "mark" | "history" | "report";
 type AttendanceStatus = "Present" | "Absent" | "Late" | "Excused";
+type DailySectionAttendance = { student: AttendanceStudent; record?: AttendanceRecord };
 
 const STATUS_OPTIONS: AttendanceStatus[] = ["Present", "Absent", "Late", "Excused"];
 
@@ -97,7 +101,10 @@ function SummaryCard({
 export default function ManageAttendance() {
   // Shared state
   const [activeTab, setActiveTab] = useState<TabId>("mark");
-  const [allStudents, setAllStudents] = useState<User[]>([]);
+  const [allStudents, setAllStudents] = useState<AttendanceStudent[]>([]);
+  const [courses, setCourses] = useState<CourseData[]>([]);
+  const [markStudents, setMarkStudents] = useState<AttendanceStudent[]>([]);
+  const [markCourseId, setMarkCourseId] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [globalError, setGlobalError] = useState("");
 
@@ -114,8 +121,9 @@ export default function ManageAttendance() {
   // Tab 2 - Attendance History
   const [historyGrade, setHistoryGrade] = useState<GradeLevel | "">("");
   const [historySection, setHistorySection] = useState<string>("");
-  const [historyStudentId, setHistoryStudentId] = useState<number>(0);
-  const [historyRecords, setHistoryRecords] = useState<AttendanceRecord[]>([]);
+  const [historyStudents, setHistoryStudents] = useState<AttendanceStudent[]>([]);
+  const [historyDate, setHistoryDate] = useState(new Date().toISOString().split("T")[0]);
+  const [historyRows, setHistoryRows] = useState<DailySectionAttendance[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [historySortAsc, setHistorySortAsc] = useState(false);
@@ -131,6 +139,13 @@ export default function ManageAttendance() {
   const [reportError, setReportError] = useState("");
 
   // Derived: students filtered by selected grade (failsafe for null grade_level)
+  const getStudentCourseId = (student: AttendanceStudent) => student.course_id ?? student.courseId ?? null;
+  const getStudentSection = (student: AttendanceStudent) => student.section || student.course_name || "";
+  const courseMatchesGrade = (course: CourseData, grade: GradeLevel) =>
+    new RegExp(`\\b${grade.replace("th", "")}th\\b|\\b${grade.replace("th", "")}\\b`, "i").test(
+      `${course.title} ${course.description}`
+    );
+
   const getStudentsByGrade = (grade: GradeLevel | "") => {
     if (!grade) return [];
     return allStudents.filter((s) => !s.grade_level || s.grade_level === grade);
@@ -139,36 +154,95 @@ export default function ManageAttendance() {
   // Get unique sections from students in the selected grade
   const getSectionsByGrade = (grade: GradeLevel | ""): string[] => {
     if (!grade) return [];
-    const students = getStudentsByGrade(grade);
-    const sections = new Set<string>();
-    students.forEach((s) => {
-      if (s.section) sections.add(s.section);
-    });
-    return Array.from(sections).sort();
+    return courses
+      .filter((course) => courseMatchesGrade(course, grade))
+      .map((course) => course.title)
+      .sort();
   };
 
   // Get filtered students based on grade and section
-  const getFilteredStudentsByGradeAndSection = (grade: GradeLevel | "", section: string): User[] => {
+  const getFilteredStudentsByGradeAndSection = (grade: GradeLevel | "", section: string): AttendanceStudent[] => {
     const gradeStudents = getStudentsByGrade(grade);
     if (!section) return gradeStudents;
-    return gradeStudents.filter((s) => s.section === section);
+    return gradeStudents.filter((s) => getStudentSection(s) === section);
   };
 
   // Get the currently displayed students for the mark attendance tab
-  const getMarkStudents = (): User[] => {
-    return getFilteredStudentsByGradeAndSection(markGrade, markSection);
+  const getMarkStudents = (): AttendanceStudent[] => {
+    return markStudents;
   };
 
   // Helper to initialize attendance records for given students
-  const initAttendanceRecordsForStudents = (students: User[]) => {
+  const initAttendanceRecordsForStudents = (students: AttendanceStudent[]) => {
     const newRecords: Record<number, AttendanceStatus> = {};
     students.forEach((s) => {
-      newRecords[s.userId] = "Present";
+      newRecords[s.student_id] = "Present";
     });
     setAttendanceRecords(newRecords);
     setBulkSuccess("");
     setBulkError("");
     setBulkErrors([]);
+  };
+
+  const loadMarkStudents = async (grade: GradeLevel, section: string) => {
+    const courseId = courses.find((course) => course.title === section)?.courseId ?? null;
+
+    setMarkCourseId(courseId ?? null);
+    if (!courseId) {
+      setMarkStudents([]);
+      initAttendanceRecordsForStudents([]);
+      return;
+    }
+
+    const response = await getAttendanceStudents(courseId);
+    if (response.success) {
+      const sectionStudents = response.data.filter(
+        (student) => getStudentCourseId(student) === courseId && student.grade_level === grade
+      );
+      setMarkStudents(sectionStudents);
+      initAttendanceRecordsForStudents(sectionStudents);
+    } else {
+      setMarkStudents([]);
+      setBulkError(response.message || "Failed to load students for this course.");
+    }
+  };
+
+  const loadHistoryStudents = async (grade: GradeLevel, section: string, date: string) => {
+    const courseId = courses.find((course) => course.title === section)?.courseId;
+    if (!courseId) {
+      setHistoryStudents([]);
+      setHistoryRows([]);
+      return;
+    }
+
+    setHistoryLoading(true);
+    setHistoryError("");
+    const response = await getAttendanceStudents(courseId);
+    if (response.success) {
+      const students = response.data.filter(
+        (student) => getStudentCourseId(student) === courseId && student.grade_level === grade
+      );
+      setHistoryStudents(students);
+      const histories = await Promise.all(students.map((student) => getAttendanceHistory(student.student_id)));
+      setHistoryRows(
+        students.map((student, index) => ({
+          student,
+          record: histories[index].data?.find(
+            (record) => {
+              const storedDate = record.date.slice(0, 10);
+              const local = new Date(record.date);
+              const localDate = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, "0")}-${String(local.getDate()).padStart(2, "0")}`;
+              return storedDate === date || localDate === date;
+            }
+          ),
+        }))
+      );
+    } else {
+      setHistoryStudents([]);
+      setHistoryRows([]);
+      setHistoryError(response.message || "Failed to load students for this section.");
+    }
+    setHistoryLoading(false);
   };
 
   // Load initial data
@@ -177,10 +251,11 @@ export default function ManageAttendance() {
     const loadData = async () => {
       try {
         setLoadingData(true);
-        const usersRes = await userService.list();
+        const [studentsRes, coursesRes] = await Promise.all([getAttendanceStudents(), getCourses()]);
         if (cancelled) return;
-        if (usersRes.success && usersRes.data) {
-          setAllStudents(usersRes.data.filter((u: User) => u.role === "Student"));
+        if (coursesRes.success) setCourses(coursesRes.courses);
+        if (studentsRes.success) {
+          setAllStudents(studentsRes.data);
         }
       } catch {
         if (!cancelled) setGlobalError("Failed to load data. Make sure the server is running.");
@@ -201,6 +276,10 @@ export default function ManageAttendance() {
       setBulkError("No students found for the selected grade and section");
       return;
     }
+    if (!markCourseId) {
+      setBulkError("The selected section is not assigned to a course.");
+      return;
+    }
 
     setBulkSubmitting(true);
     setBulkError("");
@@ -208,9 +287,10 @@ export default function ManageAttendance() {
     setBulkErrors([]);
 
     const records = students.map((student) => ({
-      student_id: student.userId,
+      student_id: student.student_id,
+      course_id: markCourseId,
       date: markDate,
-      status: attendanceRecords[student.userId] || "Present",
+      status: attendanceRecords[student.student_id] || "Present",
     }));
 
     try {
@@ -231,39 +311,6 @@ export default function ManageAttendance() {
     } finally {
       setBulkSubmitting(false);
     }
-  };
-
-  // ============ TAB 2: Attendance History ============
-  const handleLoadHistory = async () => {
-    if (!historyStudentId) {
-      setHistoryError("Please select a student");
-      return;
-    }
-    setHistoryLoading(true);
-    setHistoryError("");
-    setHistoryRecords([]);
-
-    try {
-      const res = await getAttendanceHistory(historyStudentId);
-      if (res.success && res.data) {
-        setHistoryRecords(res.data);
-      } else {
-        setHistoryError(res.message || "Failed to load attendance history");
-      }
-    } catch {
-      setHistoryError("Failed to load attendance history");
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
-  const getSortedHistory = () => {
-    const sorted = [...historyRecords];
-    sorted.sort((a, b) => {
-      const cmp = a.date.localeCompare(b.date);
-      return historySortAsc ? cmp : -cmp;
-    });
-    return sorted;
   };
 
   // ============ TAB 3: Monthly Report ============
@@ -363,6 +410,8 @@ export default function ManageAttendance() {
                     onClick={() => {
                       setMarkGrade(grade);
                       setMarkSection("");
+                      setMarkStudents([]);
+                      setMarkCourseId(null);
                       setAttendanceRecords({});
                       setBulkSuccess("");
                       setBulkError("");
@@ -397,9 +446,10 @@ export default function ManageAttendance() {
                         onValueChange={(value) => {
                           setMarkSection(value);
                           if (value) {
-                            const students = getFilteredStudentsByGradeAndSection(markGrade, value);
-                            initAttendanceRecordsForStudents(students);
+                            void loadMarkStudents(markGrade, value);
                           } else {
+                            setMarkStudents([]);
+                            setMarkCourseId(null);
                             setAttendanceRecords({});
                             setBulkSuccess("");
                             setBulkError("");
@@ -487,10 +537,10 @@ export default function ManageAttendance() {
                             </thead>
                             <tbody>
                               {getMarkStudents().map((student) => {
-                                const currentStatus = attendanceRecords[student.userId] || "Present";
+                                const currentStatus = attendanceRecords[student.student_id] || "Present";
                                 return (
                                   <tr
-                                    key={student.userId}
+                                    key={student.student_id}
                                     className="border-b border-white/5 hover:bg-white/5 transition-colors"
                                   >
                                     {/* Left: Student Name */}
@@ -519,7 +569,7 @@ export default function ManageAttendance() {
                                               onChange={() => {
                                                 setAttendanceRecords((prev) => ({
                                                   ...prev,
-                                                  [student.userId]: status,
+                                                  [student.student_id]: status,
                                                 }));
                                                 setBulkSuccess("");
                                                 setBulkError("");
@@ -642,8 +692,8 @@ export default function ManageAttendance() {
                     onClick={() => {
                       setHistoryGrade(grade);
                       setHistorySection("");
-                      setHistoryStudentId(0);
-                      setHistoryRecords([]);
+                      setHistoryStudents([]);
+                      setHistoryRows([]);
                       setHistoryError("");
                     }}
                     className={`px-4 py-1.5 rounded-lg text-xs font-medium border transition-all ${
@@ -670,9 +720,13 @@ export default function ManageAttendance() {
                     value={historySection}
                     onValueChange={(value) => {
                       setHistorySection(value);
-                      setHistoryStudentId(0);
-                      setHistoryRecords([]);
+                      setHistoryRows([]);
                       setHistoryError("");
+                      if (value) {
+                        void loadHistoryStudents(historyGrade, value, historyDate);
+                      } else {
+                        setHistoryStudents([]);
+                      }
                     }}
                   >
                     <SelectTrigger className="w-full">
@@ -689,57 +743,29 @@ export default function ManageAttendance() {
                   </Select>
                 </div>
 
-                {/* Student Select */}
                 <div className="flex-1 min-w-50">
                   <label className="block text-sm text-muted-foreground mb-1.5">
-                    <Users className="w-3.5 h-3.5 inline mr-1" />
-                    Select Student
+                    <Calendar className="w-3.5 h-3.5 inline mr-1" />
+                    Date
                   </label>
-                  <Select
-                    value={historyStudentId ? String(historyStudentId) : undefined}
-                    onValueChange={(value) => {
-                      setHistoryStudentId(Number(value));
-                      setHistoryRecords([]);
-                      setHistoryError("");
+                  <input
+                    type="date"
+                    value={historyDate}
+                    onChange={(event) => {
+                      const date = event.target.value;
+                      setHistoryDate(date);
+                      if (historyGrade && historySection) {
+                        void loadHistoryStudents(historyGrade, historySection, date);
+                      }
                     }}
-                    disabled={!historyGrade}
-                  >
-                    <SelectTrigger className="w-full disabled:opacity-50">
-                      <SelectValue placeholder={historyGrade ? `Choose student from ${historyGrade}` : "Select a grade first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                          {getFilteredStudentsByGradeAndSection(historyGrade, historySection).length > 0 ? (
-                        getFilteredStudentsByGradeAndSection(historyGrade, historySection).map((s) => (
-                          <SelectItem key={s.userId} value={String(s.userId)}>
-                            {s.name}{s.email ? ` (${s.email.split("@")[0]})` : ""}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled>
-                          No students found
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {historyGrade && (
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary"
+                  />
+                  {historySection && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {getFilteredStudentsByGradeAndSection(historyGrade, historySection).length} student(s)
-                      {historySection ? ` in ${historySection}` : ` in ${historyGrade}`}
+                      {historyStudents.length} student(s) in {historySection}
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={handleLoadHistory}
-                  disabled={historyLoading || !historyStudentId}
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {historyLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Filter className="w-4 h-4" />
-                  )}
-                  Load History
-                </button>
               </div>
             )}
 
@@ -751,11 +777,14 @@ export default function ManageAttendance() {
           </div>
 
           {/* History Table */}
-          {historyRecords.length > 0 && (
+          {historyRows.length > 0 && (
             <div className="overflow-x-auto rounded-xl border border-white/10">
               <table className="w-full">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
+                    <th className="text-left p-4 text-muted-foreground font-medium text-sm">
+                      Student
+                    </th>
                     <th
                       className="text-left p-4 text-muted-foreground font-medium text-sm cursor-pointer hover:text-white select-none"
                       onClick={() => setHistorySortAsc(!historySortAsc)}
@@ -780,17 +809,18 @@ export default function ManageAttendance() {
                   </tr>
                 </thead>
                 <tbody>
-                  {getSortedHistory().map((record) => (
+                  {historyRows.map(({ student, record }) => (
                     <tr
-                      key={record.attendance_id}
+                      key={student.student_id}
                       className="border-b border-white/5 hover:bg-white/5 transition-colors"
                     >
-                      <td className="p-4 text-white text-sm">{record.date}</td>
+                      <td className="p-4 text-white text-sm">{student.name}</td>
+                      <td className="p-4 text-white text-sm">{record?.date ? record.date.slice(0, 10) : historyDate}</td>
                       <td className="p-4 text-white text-sm">
-                        {record.course_name}
+                        {historySection}
                       </td>
                       <td className="p-4 text-center">
-                        <StatusBadge status={record.status} />
+                        <StatusBadge status={record?.status || "Not marked"} />
                       </td>
                     </tr>
                   ))}
@@ -799,9 +829,9 @@ export default function ManageAttendance() {
             </div>
           )}
 
-          {historyStudentId && !historyLoading && historyRecords.length === 0 && !historyError && (
+          {historySection && !historyLoading && historyRows.length === 0 && !historyError && (
             <div className="p-8 text-center text-muted-foreground rounded-xl border border-white/10">
-              No attendance records found for this student.
+              No students found in this section.
             </div>
           )}
         </div>
@@ -896,8 +926,8 @@ export default function ManageAttendance() {
                     <SelectContent>
                       {getFilteredStudentsByGradeAndSection(reportGrade, reportSection).length > 0 ? (
                         getFilteredStudentsByGradeAndSection(reportGrade, reportSection).map((s) => (
-                          <SelectItem key={s.userId} value={String(s.userId)}>
-                            {s.name}{s.email ? ` (${s.email.split("@")[0]})` : ""}
+                          <SelectItem key={s.student_id} value={String(s.student_id)}>
+                            {s.name}
                           </SelectItem>
                         ))
                       ) : (

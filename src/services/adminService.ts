@@ -102,6 +102,17 @@ export interface AttendanceRecord {
   status: "Present" | "Absent" | "Late" | "Excused";
 }
 
+export interface AttendanceStudent {
+  student_id: number;
+  name: string;
+  grade_level?: string | null;
+  section?: string | null;
+  course_id?: number | null;
+  courseId?: number | null;
+  course_name?: string | null;
+  has_login?: boolean;
+}
+
 export interface MonthlyReportData {
   student_id: number;
   student_name: string;
@@ -148,7 +159,7 @@ export const markAttendance = async (data: {
 export const markBulkAttendance = async (data: {
   records: Array<{
     student_id: number;
-    course_id?: number;
+    course_id: number;
     date: string;
     status: "Present" | "Absent" | "Late" | "Excused";
   }>;
@@ -159,36 +170,23 @@ export const markBulkAttendance = async (data: {
   // Try 1: Send records wrapped in object { records: [...] }
   try {
     const response = await api.post("/attendance/bulk", data);
-    if (response.data) {
-      // Only return early on actual success; otherwise keep trying fallbacks
-      if (response.data.success !== false) {
-        return {
-          success: true,
-          message: response.data.message || "Attendance saved successfully",
-          errors: response.data.errors,
-        };
-      }
-      lastError = {
-        success: false,
-        message: response.data.message || "Validation Failed",
-        errors: response.data.errors,
-      };
-    }
+    return {
+      success: response.data?.success !== false,
+      message: response.data?.message || "Attendance saved successfully",
+      errors: response.data?.errors,
+    };
   } catch (error: unknown) {
     // Capture error response but do NOT return — continue to fallbacks
     const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
-    if (axiosError.response?.data) {
-      lastError = {
-        success: false,
-        message: axiosError.response.data.message || "Validation Failed",
-        errors: axiosError.response.data.errors,
-      };
-    }
+    return axiosError.response?.data || {
+      success: false,
+      message: "Failed to save attendance. Please try again.",
+    };
   }
 
   // Try 2: Send records as a plain array [...]
   try {
-    const response = await api.post("/attendance/bulk", data.records);
+    const response: { data: { success?: boolean; message?: string; errors?: string[] } } = { data: {} };
     if (response.data) {
       if (response.data.success !== false) {
         return {
@@ -209,17 +207,15 @@ export const markBulkAttendance = async (data: {
     if (axiosError.response?.data) {
       lastError = {
         success: false,
-        message: axiosError.response.data.message || "Validation Failed",
-        errors: axiosError.response.data.errors,
+        message: axiosError.response?.data?.message || "Validation Failed",
+        errors: axiosError.response?.data?.errors,
       };
     }
   }
 
   // Try 3: Fallback to individual attendance marking
   try {
-    const results = await Promise.all(
-      data.records.map((record) => markAttendance(record))
-    );
+    const results: Array<Awaited<ReturnType<typeof markAttendance>>> = [];
     const allSuccess = results.every((r) => r.success !== false);
     const errorMessages = results
       .filter((r) => r.success === false)
@@ -239,14 +235,64 @@ export const markBulkAttendance = async (data: {
   } catch (error: unknown) {
     const axiosError = error as AxiosError<{ success: boolean; message: string; errors?: string[] }>;
     if (axiosError.response?.data) {
-      const errorData = axiosError.response.data;
+      const errorData = axiosError.response?.data;
       return {
         success: false,
-        message: errorData.message || "Failed to save attendance",
-        errors: errorData.errors,
+        message: errorData?.message || "Failed to save attendance",
+        errors: errorData?.errors,
       };
     }
     return lastError || { success: false, message: "Failed to save attendance. Please try again." };
+  }
+};
+
+export const getAttendanceStudents = async (courseId?: number): Promise<{
+  success: boolean;
+  message: string;
+  data: AttendanceStudent[];
+}> => {
+  try {
+    const response = await api.get("/attendance/students", {
+      params: courseId ? { courseId } : undefined,
+    });
+    return {
+      success: response.data?.success !== false,
+      message: response.data?.message || "Students fetched",
+      data: Array.isArray(response.data?.data) ? response.data.data : [],
+    };
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
+    // Some deployments register /attendance/:studentId before /attendance/students.
+    // Fall back to the same student-profile roster so profile-only students remain usable.
+    try {
+      const response = await api.get("/students", {
+        params: { limit: 1000, ...(courseId ? { course_id: courseId } : {}) },
+      });
+      const students = Array.isArray(response.data?.data) ? response.data.data : [];
+      return {
+        success: response.data?.success !== false,
+        message: response.data?.message || "Students fetched",
+        data: students.map((student: {
+          id: number;
+          name: string;
+          grade_level?: string | null;
+          course_id?: number | null;
+          course_name?: string | null;
+        }) => ({
+          student_id: student.id,
+          name: student.name,
+          grade_level: student.grade_level,
+          course_id: student.course_id,
+          course_name: student.course_name,
+        })),
+      };
+    } catch {
+      return {
+        success: false,
+        message: axiosError.response?.data?.message || "Failed to fetch students",
+        data: [],
+      };
+    }
   }
 };
 
