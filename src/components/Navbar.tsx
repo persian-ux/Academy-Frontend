@@ -259,17 +259,6 @@ export default function Navbar() {
                   Sign In
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
                 </Link>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const hero = document.querySelector("#hero");
-                    if (hero) hero.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="bg-accent text-accent-foreground px-5 py-2.5 rounded-lg font-semibold text-sm hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300"
-                >
-                  Enroll Now
-                </a>
               </>
             )}
           </div>
@@ -415,18 +404,6 @@ export default function Navbar() {
                 >
                   Sign In
                 </Link>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsOpen(false);
-                    const hero = document.querySelector("#hero");
-                    if (hero) hero.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="bg-accent text-accent-foreground px-8 py-3 rounded-lg font-semibold text-base hover:scale-105 hover:shadow-lg hover:shadow-accent/25 transition-all duration-300 mt-4"
-                >
-                  Enroll Now
-                </a>
               </>
             )}
           </div>
