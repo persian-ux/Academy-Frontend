@@ -14,11 +14,13 @@ import {
   GraduationCap,
   Users,
   Save,
+  Download,
 } from "lucide-react";
 import {
   markBulkAttendance,
   getAttendanceHistory,
   getMonthlyAttendanceReport,
+  exportStudentMonthlyAttendanceReport,
   getAttendanceStudents,
   getCourses,
   type AttendanceRecord,
@@ -142,6 +144,8 @@ export default function ManageAttendance() {
   const [reportData, setReportData] = useState<MonthlyReportData | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   // Derived: students filtered by selected grade (failsafe for null grade_level)
   const getStudentCourseId = (student: AttendanceStudent) => student.course_id ?? student.courseId ?? null;
@@ -409,6 +413,35 @@ export default function ManageAttendance() {
       setReportError("Failed to load monthly report");
     } finally {
       setReportLoading(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    if (!reportStudentId || !reportData) return;
+    setExportingCsv(true);
+    setExportError("");
+    try {
+      const res = await exportStudentMonthlyAttendanceReport({
+        studentId: reportStudentId,
+        month: reportMonth,
+        year: reportYear,
+      });
+      if (res.success && res.blob) {
+        const url = URL.createObjectURL(res.blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.filename || `student-attendance-${reportStudentId}-${reportYear}-${String(reportMonth).padStart(2, "0")}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        setExportError(res.message || "Failed to export CSV.");
+      }
+    } catch {
+      setExportError("Failed to export CSV.");
+    } finally {
+      setExportingCsv(false);
     }
   };
 
@@ -1171,10 +1204,27 @@ export default function ManageAttendance() {
               </div>
 
               {/* Report Header */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-4 flex-wrap">
                 <p className="text-white font-medium">
                   Report for {reportData.student_name} ({reportGrade}) - {reportData.month} {reportData.year}
                 </p>
+                <div className="flex flex-col items-end gap-1">
+                  <button
+                    onClick={handleExportCsv}
+                    disabled={exportingCsv}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {exportingCsv ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                    Export CSV
+                  </button>
+                  {exportError && (
+                    <p className="text-xs text-red-400">{exportError}</p>
+                  )}
+                </div>
               </div>
 
               {/* Detail Table */}

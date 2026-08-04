@@ -328,6 +328,28 @@ export const getMonthlyAttendanceReport = async (params: {
   }
 };
 
+export const exportStudentMonthlyAttendanceReport = async (params: {
+  studentId: number;
+  month: number;
+  year: number;
+}): Promise<{ success: boolean; message: string; blob?: Blob; filename?: string }> => {
+  try {
+    const response = await api.get("/attendance/report/export", {
+      params,
+      responseType: "blob",
+    });
+    const contentDisposition = response.headers["content-disposition"] as string | undefined;
+    let filename = `student-attendance-${params.studentId}-${params.year}-${String(params.month).padStart(2, "0")}.csv`;
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?([^"]+)"?/);
+      if (match) filename = match[1];
+    }
+    return { success: true, message: "CSV exported successfully.", blob: response.data as Blob, filename };
+  } catch {
+    return { success: false, message: "Failed to export attendance CSV." };
+  }
+};
+
 // ==================== TESTS ====================
 export interface TestData {
   testId: number;
