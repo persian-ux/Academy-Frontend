@@ -472,7 +472,22 @@ export const getDashboardStats = async (): Promise<{
     const response = await api.get("/dashboard/stats");
     const res = response.data;
     if (res.success && res.data) {
-      return { success: true, stats: res.data };
+      const stats = { ...res.data } as DashboardStats;
+      // The /dashboard/stats endpoint may only count students that have login
+      // credentials (i.e. users in the /users table). Students without logins
+      // are stored separately in the /students table, so fetch the full roster
+      // to get the accurate student count.
+      try {
+        const studentsRes = await api.get("/students", { params: { limit: 1000 } });
+        const studentsData = studentsRes.data?.data || [];
+        if (Array.isArray(studentsData)) {
+          stats.totalStudents =
+            studentsRes.data?.pagination?.totalItems ?? studentsData.length;
+        }
+      } catch {
+        // keep the original totalStudents if /students fetch fails
+      }
+      return { success: true, stats };
     }
   } catch {
     // Fallback: endpoint not available — will compute from individual endpoints
@@ -480,10 +495,11 @@ export const getDashboardStats = async (): Promise<{
 
   // Fallback: aggregate stats from individual working endpoints
   try {
-    const [usersRes, coursesRes, testsRes] = await Promise.all([
+    const [usersRes, coursesRes, testsRes, studentsRes] = await Promise.all([
       api.get("/users"),
       api.get("/courses"),
       api.get("/tests"),
+      api.get("/students", { params: { limit: 1000 } }),
     ]);
 
     const usersData = usersRes.data?.data || usersRes.data?.users || [];
@@ -495,9 +511,18 @@ export const getDashboardStats = async (): Promise<{
     const testsData = testsRes.data?.data || testsRes.data?.tests || [];
     const tests = Array.isArray(testsData) ? testsData : [];
 
+    // Students are stored separately from users — /students includes ALL
+    // students (even those without login credentials), while /users only
+    // includes users with login accounts. Use /students for the accurate
+    // student count.
+    const studentsData = studentsRes.data?.data || [];
+    const students = Array.isArray(studentsData) ? studentsData : [];
+    const totalStudents =
+      studentsRes.data?.pagination?.totalItems ?? students.length;
+
     const stats: DashboardStats = {
       totalUsers: users.length,
-      totalStudents: users.filter((u: { role?: string }) => u.role === "Student").length,
+      totalStudents,
       totalTeachers: users.filter((u: { role?: string }) => u.role === "Teacher").length,
       totalCourses: courses.length,
       totalTests: tests.length,
