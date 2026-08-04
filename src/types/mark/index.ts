@@ -6,9 +6,12 @@ export interface Mark {
   test_date: string;
   student_id: number;
   student_name: string;
+  student_roll_no: string | null;
   marks_obtained: number;
   total_marks: number;
+  uploaded_by: number;
   uploaded_by_name: string;
+  created_at: string | null;
 }
 
 export interface CreateMarkPayload {

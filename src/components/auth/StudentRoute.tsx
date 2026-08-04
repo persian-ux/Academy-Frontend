@@ -14,7 +14,7 @@ export default function StudentRoute({ children }: StudentRouteProps) {
 
   // If a non-student tries to access a student page, redirect to home
   if (user.role !== "Student") {
-    return <Navigate to="/" replace />;
+    return <Navigate to={user.role === "Teacher" ? "/teacher" : "/"} replace />;
   }
 
   return <>{children}</>;

@@ -16,6 +16,8 @@ export default function Reports() {
   const [selectedCourse, setSelectedCourse] = useState<number>(0);
   const [error, setError] = useState("");
 
+  const selectedCourseTitle = courses.find((c) => c.courseId === selectedCourse)?.title || "";
+
   useEffect(() => {
     let cancelled = false;
     const loadData = async () => {
@@ -23,7 +25,14 @@ export default function Reports() {
         setLoading(true);
         setError("");
         const [reportsRes, coursesRes] = await Promise.all([
-          getReports(selectedCourse ? { courseId: selectedCourse } : undefined),
+          getReports(
+            selectedCourse
+              ? {
+                  courseId: selectedCourse,
+                  courseTitle: selectedCourseTitle,
+                }
+              : undefined
+          ),
           getCourses(),
         ]);
         if (cancelled) return;
@@ -37,22 +46,22 @@ export default function Reports() {
     };
     loadData();
     return () => { cancelled = true; };
-  }, [selectedCourse]);
+  }, [selectedCourse, selectedCourseTitle]);
 
-  const getGradeColor = (grade: string) => {
-    const colors: Record<string, string> = {
-      A: "text-green-400",
-      B: "text-blue-400",
-      C: "text-yellow-400",
-      D: "text-orange-400",
-      F: "text-red-400",
-    };
-    return colors[grade] || "text-muted-foreground";
+  const getTestPercentage = (r: StudentReport) => {
+    if (r.totalMarks <= 0) return 0;
+    return (r.testScore / r.totalMarks) * 100;
   };
 
   const handleExport = () => {
-    const headers = ["Student", "Section", "Classes", "Attended", "Attendance %", "Test Score", "Total Marks", "Grade"];
-    const rows = reports.map((r) => [r.studentName, r.courseName, r.totalClasses, r.attendedClasses, r.attendancePercentage.toFixed(1) + "%", r.testScore, r.totalMarks, r.grade]);
+    const headers = ["Student", "Class", "Section", "Attendance %", "Test Performance %"];
+    const rows = reports.map((r) => [
+      r.studentName,
+      r.grade_level ?? "",
+      r.courseName,
+      r.attendancePercentage.toFixed(1) + "%",
+      getTestPercentage(r).toFixed(1) + "%",
+    ]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -103,6 +112,11 @@ export default function Reports() {
             ))}
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground mt-2">
+          {selectedCourse === 0
+            ? "Showing all students sorted by grade level (ascending)."
+            : `Showing students in ${selectedCourseTitle} with complete details.`}
+        </p>
       </div>
 
       {loading ? (
@@ -115,37 +129,36 @@ export default function Reports() {
             <thead>
               <tr className="bg-white/5 border-b border-white/10">
                 <th className="text-left p-4 text-muted-foreground font-medium text-sm">Student</th>
+                <th className="text-left p-4 text-muted-foreground font-medium text-sm">Class</th>
                 <th className="text-left p-4 text-muted-foreground font-medium text-sm">Section</th>
-                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Classes</th>
-                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attended</th>
                 <th className="text-center p-4 text-muted-foreground font-medium text-sm">Attendance %</th>
-                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Test Score</th>
-                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Total</th>
-                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Grade</th>
+                <th className="text-center p-4 text-muted-foreground font-medium text-sm">Test Performance %</th>
               </tr>
             </thead>
             <tbody>
-              {reports.map((r, idx) => (
-                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="p-4 text-white text-sm">{r.studentName}</td>
-                  <td className="p-4 text-muted-foreground text-sm">{r.courseName}</td>
-                  <td className="p-4 text-white text-sm text-center">{r.totalClasses}</td>
-                  <td className="p-4 text-white text-sm text-center">{r.attendedClasses}</td>
-                  <td className="p-4 text-sm text-center">
-                    <span className={r.attendancePercentage >= 75 ? "text-green-400" : "text-red-400"}>
-                      {r.attendancePercentage.toFixed(1)}%
-                    </span>
-                  </td>
-                  <td className="p-4 text-white text-sm text-center">{r.testScore}</td>
-                  <td className="p-4 text-white text-sm text-center">{r.totalMarks}</td>
-                  <td className="p-4 text-sm text-center font-semibold">
-                    <span className={getGradeColor(r.grade)}>{r.grade}</span>
-                  </td>
-                </tr>
-              ))}
+              {reports.map((r, idx) => {
+                const testPct = getTestPercentage(r);
+                return (
+                  <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td className="p-4 text-white text-sm">{r.studentName}</td>
+                    <td className="p-4 text-muted-foreground text-sm">{r.grade_level || "—"}</td>
+                    <td className="p-4 text-muted-foreground text-sm">{r.courseName}</td>
+                    <td className="p-4 text-sm text-center">
+                      <span className={r.attendancePercentage >= 75 ? "text-green-400" : "text-red-400"}>
+                        {r.attendancePercentage.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-center">
+                      <span className={testPct >= 50 ? "text-green-400" : "text-red-400"}>
+                        {testPct.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
               {reports.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">No reports available</td>
+                  <td colSpan={5} className="p-8 text-center text-muted-foreground">No reports available</td>
                 </tr>
               )}
             </tbody>

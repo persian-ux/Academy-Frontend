@@ -1,46 +1,45 @@
 import { useState } from "react";
-import { Link, useLocation, Outlet } from "react-router-dom";
+import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Users,
-  BookOpen,
-  ClipboardCheck,
   FileText,
   BarChart3,
-  Upload,
-  GraduationCap,
+  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
-  UserCog,
-  Wallet,
+  LogOut,
+  User,
 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppStore";
+import { logout } from "@/store/slices/authSlice";
 
 const sidebarItems = [
-  { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, path: "/admin" },
-  { label: "Users", icon: <Users className="w-5 h-5" />, path: "/admin/users" },
-  { label: "Students", icon: <UserCog className="w-5 h-5" />, path: "/admin/students" },
-  { label: "Sections", icon: <BookOpen className="w-5 h-5" />, path: "/admin/courses" },
-  { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/attendance" },
-  { label: "Teacher Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/admin/teacher-attendance" },
-  { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/admin/tests" },
-  { label: "Upload Marks", icon: <Upload className="w-5 h-5" />, path: "/admin/upload-marks" },
-  { label: "Class Marks", icon: <GraduationCap className="w-5 h-5" />, path: "/admin/class-marks" },
-  { label: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/reports" },
-  { label: "Monthly Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/admin/monthly-reports" },
-  { label: "Fees", icon: <Wallet className="w-5 h-5" />, path: "/admin/fees" },
+  { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, path: "/teacher" },
+  { label: "Attendance", icon: <ClipboardCheck className="w-5 h-5" />, path: "/teacher/attendance" },
+  { label: "Tests", icon: <FileText className="w-5 h-5" />, path: "/teacher/tests" },
+  { label: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/teacher/reports" },
 ];
 
-export default function AdminLayout() {
+export default function TeacherLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
 
   const isActive = (path: string) => {
-    if (path === "/admin") return location.pathname === "/admin";
+    if (path === "/teacher") return location.pathname === "/teacher";
     return location.pathname.startsWith(path);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/signin");
   };
 
   return (
     <div className="min-h-screen pt-20 flex">
+      {/* Sidebar */}
       <aside
         className={`${
           collapsed ? "w-16" : "w-64"
@@ -50,6 +49,7 @@ export default function AdminLayout() {
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -72,21 +72,27 @@ export default function AdminLayout() {
             </Link>
           ))}
         </nav>
-
-        <div className="p-3 border-t border-white/10">
-          <Link
-            to="/admin"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-white transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            {!collapsed && <span>Admin Panel</span>}
-          </Link>
-        </div>
       </aside>
 
+      {/* Main content */}
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <Outlet />
       </main>
+
+      {/* Top bar overlay for teacher name + logout — fixed at top right */}
+      <div className="fixed top-0 right-0 z-40 flex items-center gap-2 bg-black/30 backdrop-blur-sm border-l border-t border-white/10 px-3 py-2 rounded-bl-xl">
+        <User className="w-4 h-4 text-muted-foreground" />
+        <span className="text-sm text-white font-medium hidden sm:inline">
+          {user?.name ?? "Teacher"}
+        </span>
+        <button
+          onClick={handleLogout}
+          className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
+          title="Logout"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

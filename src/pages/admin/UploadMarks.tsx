@@ -3,10 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { Loader2, Upload, Check, AlertCircle, Users as UsersIcon } from "lucide-react";
 import { getAllTests } from "@/services/testService";
 import { getAllUsers } from "@/services/userService";
+import { getStudents } from "@/services/studentService";
 import { uploadSingleMark, uploadBatchMarks, getMarksByTest } from "@/services/markService";
 import type { Test } from "@/types/test";
 import type { Mark } from "@/types/mark";
 import type { User } from "@/services/userService";
+import type { Student } from "@/types/student";
 import {
   Select,
   SelectTrigger,
@@ -48,9 +50,52 @@ export default function UploadMarks() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [testsRes, usersRes] = await Promise.all([getAllTests(), getAllUsers()]);
+        const [testsRes, usersRes, studentsRes] = await Promise.all([
+          getAllTests(),
+          getAllUsers(),
+          getStudents({ limit: 1000 }),
+        ]);
         if (testsRes.success) setTests(testsRes.data);
-        if (usersRes.success) setStudents(usersRes.data.filter((u) => u.role === "Student"));
+
+        // Users with Student role = students who have login credentials
+        const usersWithStudentRole = usersRes.success
+          ? usersRes.data.filter((u) => u.role === "Student")
+          : [];
+
+        // Students from /students endpoint = ALL students (with or without login)
+        const allStudents: Array<User & { studentId?: number }> = studentsRes.success
+          ? studentsRes.data.map((s: Student) => ({
+              userId: s.id,
+              name: s.name,
+              email: null,
+              username: null,
+              role: "Student" as const,
+              grade_level: s.grade_level,
+              section: null,
+              courseId: s.course_id ?? null,
+              student_id: s.id,
+              createdAt: s.created_at,
+              isActive: true,
+              studentId: s.id,
+            }))
+          : [];
+
+        // Merge: prefer user accounts (they have more info like email),
+        // but include profile-only students too. Deduplicate by userId/studentId.
+        const seen = new Set<number>();
+        const merged: User[] = [];
+        for (const u of usersWithStudentRole) {
+          seen.add(u.userId);
+          merged.push(u);
+        }
+        for (const s of allStudents) {
+          const id = s.studentId ?? s.userId;
+          if (!seen.has(id)) {
+            merged.push(s as User);
+          }
+        }
+
+        setStudents(merged);
       } catch {
         showToast("error", "Failed to load data");
       } finally {

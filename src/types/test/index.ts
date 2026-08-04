@@ -1,13 +1,17 @@
+export type GradeLevel = "8th" | "9th" | "10th" | "11th" | "12th";
+
+export type TestStatus = "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
+
 export interface Test {
   test_id: number;
   title: string;
   subject: string;
-  grade: string;
-  date: string;
-  duration: number;
+  grade: GradeLevel;
+  date: string; // YYYY-MM-DD
+  duration: number; // minutes
   created_by: number;
-  status: "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
-  created_at: string;
+  status: TestStatus;
+  created_at: string | null;
   creator_name: string;
   creator_email: string;
 }
@@ -15,13 +19,13 @@ export interface Test {
 export interface CreateTestPayload {
   title: string;
   subject: string;
-  grade: string;
-  date: string;
-  duration: number;
-  status: "Scheduled" | "Ongoing" | "Completed" | "Cancelled";
+  grade: GradeLevel;
+  date: string; // YYYY-MM-DD
+  duration: number; // minutes
+  status?: TestStatus;
 }
 
-export interface UpdateTestPayload extends Partial<CreateTestPayload> {}
+export type UpdateTestPayload = Partial<CreateTestPayload>;
 
 export interface TestApiResponse {
   success: boolean;

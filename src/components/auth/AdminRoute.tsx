@@ -13,7 +13,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
   }
 
   if (user.role !== "Admin") {
-    return <Navigate to={user.role === "Student" ? "/dashboard" : "/"} replace />;
+    return <Navigate to={user.role === "Student" ? "/dashboard" : user.role === "Teacher" ? "/teacher" : "/"} replace />;
   }
 
   return <>{children}</>;

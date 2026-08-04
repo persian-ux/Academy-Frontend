@@ -53,26 +53,33 @@ export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
 };
 
 /**
- * Store auth data in localStorage
+ * Store auth data in sessionStorage.
+ * Using sessionStorage means the user is automatically logged out
+ * when the browser tab or window is closed.
  */
 export const persistAuth = (token: string, user: AuthUser): void => {
-  localStorage.setItem("auth_token", token);
-  localStorage.setItem("auth_user", JSON.stringify(user));
+  sessionStorage.setItem("auth_token", token);
+  sessionStorage.setItem("auth_user", JSON.stringify(user));
+};
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 /**
- * Clear auth data from localStorage
+ * Clear auth data from sessionStorage
  */
 export const clearAuth = (): void => {
-  localStorage.removeItem("auth_token");
-  localStorage.removeItem("auth_user");
+  sessionStorage.removeItem("auth_token");
+  sessionStorage.removeItem("auth_user");
 };
 
 /**
  * Get stored auth user
  */
 export const getStoredUser = (): AuthUser | null => {
-  const raw = localStorage.getItem("auth_user");
+  const raw = sessionStorage.getItem("auth_user");
   if (!raw) return null;
   try {
     return JSON.parse(raw) as AuthUser;
@@ -85,7 +92,7 @@ export const getStoredUser = (): AuthUser | null => {
  * Get stored auth token
  */
 export const getStoredToken = (): string | null => {
-  return localStorage.getItem("auth_token");
+  return sessionStorage.getItem("auth_token");
 };
 
 /**
