@@ -8,8 +8,8 @@ const teachers = [
     name: "Majid Mehmood",
     subject: "Education",
     bio: "Educator with a strong academic background in education, committed to delivering quality learning experiences and fostering student growth.",
-    credentials: "MPhil in Education, Punjab University",
-    image: "/Majid.jpeg",
+    credentials: "MPhil in Education, Punjab University and Controller of Examination, Riphah International University",
+    image: "/Majid-Mehmmod.png",
   },
   {
     name: "Muhammad Zeeshan",
@@ -27,11 +27,26 @@ const teachers = [
     image: "/Dr-AbdulRehman.jpeg",
   },
   {
-    name: "Junaid Jabbar",
-    subject: "Law",
-    bio: "Legal professional passionate about educating the next generation of legal minds.",
-    credentials: "LLB, Punjab University",
-    image: "/Junaid-Jabbar.jpeg",
+    name: "Hafiz Asad Zia Ullah Butt",
+    subject: "M.Sc in Mathematics",
+    bio: "Mathematics educator passionate about fostering analytical thinking and problem-solving skills in students.",
+    credentials: "M.Sc in Mathematics, University of Education",
+    image: "/Asad-zia.jpeg",
+  },
+  {
+    name: "Dr. Adeel Ahmed",
+    subject: "Masters in Nutrition and Dietetics (MS)",
+    bio: "Nutrition and dietetics expert dedicated to promoting health and wellness through evidence-based dietary practices.",
+    credentials:
+      "Masters in Nutrition and Dietetics (MS), University of Management and Technology",
+    image: "/Adeel-Ahmad.jpeg",
+  },
+  {
+    name: "Mufti Muhammad Sufyan",
+    subject: "Islamic Studies",
+    bio: "Islamic scholar committed to guiding students in understanding and practicing Islamic teachings.",
+    credentials: "M.A. in Islamic Studies, University of Management and Technology",
+    image: "/Mufti-M.Sufyan.jpeg",    
   },
   {
     name: "Dr. Arslan Asif",

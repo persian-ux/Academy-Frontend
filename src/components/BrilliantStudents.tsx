@@ -29,12 +29,6 @@ const students = [
     image: "/Ali-Nawaz.jpeg",
   },
   {
-    name: "Dr. Adeel Ahmed",
-    degree: "Masters in Nutrition and Dietetics (MS)",
-    university: "University of Management and Technology",
-    image: "/Adeel-Ahmad.jpeg",
-  },
-  {
     name: "Ali Rizwan",
     degree: "BS Information Engineering Technology",
     university: "University of Lahore",
@@ -45,6 +39,12 @@ const students = [
     degree: "BS Nursing",
     university: "University of Lahore",
     image: "/Tayyab-Maqbool.jpeg",
+  },
+  {
+    name: "Fazeela Jameel",
+    degree: "BS Computer Science",
+    university: "University of Education",
+    image: "/Fazeela.jpeg",
   },
   {
     name: "Ameer Hamza",
@@ -58,6 +58,12 @@ const students = [
     university: "Punjab University",
     image: "/Mahrukh-Iftikhar.jpeg",
   },
+  {
+    name: "Tamoor Hassan",
+    degree: "Soldier in Pakistan Army",
+    university: "Pakistan Army",
+    image: "/Tamoor.jpeg",
+  }
 ];
 
 export default function BrilliantStudents() {
