@@ -8,7 +8,7 @@ const teachers = [
     name: "Majid Mehmood",
     subject: "Education",
     bio: "Educator with a strong academic background in education, committed to delivering quality learning experiences and fostering student growth.",
-    credentials: "MPhil in Education, Punjab University and Controller of Examination, Riphah International University",
+    credentials: "MPhil in Education, Punjab University, Controller of Examination in Riphah International University",
     image: "/Majid-Mehmmod.png",
   },
   {
