@@ -49,6 +49,13 @@ const teachers = [
     image: "/Mufti-M.Sufyan.jpeg",    
   },
   {
+    name: "Baseerat Abdul Mateen",
+    subject: "MA in Islamic Studies(shahdat ul Aalim)",
+    bio: "Islamic studies educator dedicated to nurturing students' spiritual growth and understanding of Islamic principles.",
+    credentials: "MA in Islamic Studies(shahdat ul Aalim), Jamiya Bait Ul Noor",
+    image: "/Bseerat.webp",
+  },
+  {
     name: "Dr. Arslan Asif",
     subject: "Nutrition and Dietetics",
     bio: "Nutrition and dietetics expert dedicated to promoting health and wellness through evidence-based dietary practices.",

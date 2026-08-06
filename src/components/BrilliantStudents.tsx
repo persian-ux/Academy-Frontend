@@ -11,16 +11,16 @@ const students = [
     image: "/Ahsan-Sattar.jpeg",
   },
   {
-    name: "Captain Dr Asaf Ali Hashmi",
-    degree: "MBBS",
-    university: "Army Medical College",
-    image: "/Asif-Ali.png",
-  },
-  {
     name: "Aqsa Aslam",
     degree: "BS Mathematics",
     university: "University of Education",
     image: "/Aqsa-Aslam.jpeg",
+  },
+  {
+    name: "Captain Dr Asaf Ali Hashmi",
+    degree: "MBBS",
+    university: "Army Medical College",
+    image: "/Asif-Ali.png",
   },
   {
     name: "Engr. Ali Nawaz",
@@ -63,6 +63,18 @@ const students = [
     degree: "Soldier in Pakistan Army",
     university: "Pakistan Army",
     image: "/Tamoor.jpeg",
+  },
+  {
+    name: "Sadiya Ashraf",
+    degree: "BS Software Engineering",
+    university: "Punjab Tianjin University",
+    image: "/Sadia.jpeg",
+  },
+  {
+    name: "Zain Ul Abideen",
+    degree: "BS Physical Therapy",
+    university: "University of Management and Technology",
+    image: "/Zain-ul-abideen.jpeg",
   }
 ];
 
